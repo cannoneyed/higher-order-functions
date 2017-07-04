@@ -1,0 +1,33 @@
+{
+  "name": "higher-order-functions",
+  "version": "1.0.0",
+  "description": "Higher Order Functions site",
+  "main": "process.js",
+  "dependencies": {
+    "next": "^3.0.1-beta.7",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.2.3",
+    "eslint": "^4.1.1",
+    "eslint-plugin-prettier": "^2.1.2",
+    "eslint-plugin-react": "^7.1.0",
+    "prettier": "^1.5.2"
+  },
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cannoneyed/higher-order-function.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cannoneyed/higher-order-function/issues"
+  },
+  "homepage": "https://github.com/cannoneyed/higher-order-function#readme"
+}
