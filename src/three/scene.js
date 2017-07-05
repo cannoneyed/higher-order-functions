@@ -32,7 +32,7 @@ export function init(container) {
     75,
     window.innerWidth / window.innerHeight,
     1,
-    3000,
+    30000,
   )
   camera.position.z = 800
   controls = new OrbitControls(camera)
@@ -40,13 +40,20 @@ export function init(container) {
   scene = new THREE.Scene()
   // scene.fog = new THREE.FogExp2(0x000000, 0.0007)
 
+  const nRows = data.length
+  const nCols = data[0].length
+  const adjust = 4 / 3
+
+  const offsetRow = nRows * PIXEL_SIZE / 2 - 0.5 * PIXEL_SIZE
+  const offSetCol = nCols * PIXEL_SIZE / 2 + 7 * PIXEL_SIZE
+
   _.map(data, (row, rowIndex) => {
     _.map(row, (digit, columnIndex) => {
       const colorIndex = parseInt(digit, 16)
 
       const vertex = new THREE.Vector3()
-      vertex.x = rowIndex * PIXEL_SIZE - 1100
-      vertex.y = columnIndex * PIXEL_SIZE - 700
+      vertex.x = rowIndex * PIXEL_SIZE - offsetRow
+      vertex.y = columnIndex * PIXEL_SIZE - offSetCol
       vertex.z = 0
 
       const geometry = colorMap[colorIndex].geometry
@@ -57,7 +64,7 @@ export function init(container) {
   const geometries = _.map(colorMap, ({ geometry }) => geometry)
   _.map(geometries, (geometry, colorIndex) => {
     const color = getHexColorByIndex(colorIndex)
-    const size = PIXEL_SIZE * 1.35
+    const size = PIXEL_SIZE * adjust
 
     const material = new THREE.PointsMaterial({ size })
     material.color.setHex(color)
