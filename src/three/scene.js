@@ -129,13 +129,13 @@ function render() {
   //
   // camera.lookAt(scene.position)
   //
-  // for (let i = 0; i < scene.children.length; i++) {
-  //   let object = scene.children[i]
-  //
-  //   if (object instanceof THREE.Points) {
-  //     object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1))
-  //   }
-  // }
+  for (let i = 0; i < scene.children.length; i++) {
+    let object = scene.children[i]
+
+    if (object instanceof THREE.Points) {
+      object.position.z = Math.sin(time * i) * 500
+    }
+  }
   // const materials = colorMap.materials()
   // _.map(materials, (material, index) => {
   //   const color = getHexColorByIndex(index)
