@@ -40,6 +40,6 @@ for (let col = nCols - 1; col >= 0; col--) {
 
 fs.writeFileSync(
   path.resolve(__dirname, './data.json'),
-  JSON.stringify(output),
+  JSON.stringify(data),
   'utf-8',
 )

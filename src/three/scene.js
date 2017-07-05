@@ -1,87 +1,80 @@
-import * as THREE from 'three'
+import * as Three from 'three'
+import data from 'data/data.json'
+import _ from 'lodash'
 
-let container
-let camera,
-  scene,
-  renderer,
-  particles,
-  geometry,
-  materials = [],
-  parameters,
-  i,
-  h,
-  color,
-  size
+import { colors, PIXEL_SIZE } from './constants'
+
+const colorMap = _.range(14).map(() => ({
+  geometry: new Three.Geometry(),
+}))
+
+colorMap.geometries = () => _.map(colorMap, ({ geometry }) => geometry)
+colorMap.materials = () => _.map(colorMap, ({ material }) => material)
+colorMap.particles = () => _.map(colorMap, ({ particles }) => particles)
+
+let camera, scene, renderer
 let mouseX = 0,
   mouseY = 0
 
 let windowHalfX = window.innerWidth / 2
 let windowHalfY = window.innerHeight / 2
 
-init()
-animate()
+export function animate() {
+  requestAnimationFrame(animate)
+  render()
+}
 
-function init() {
-  container = document.createElement('div')
-  document.body.appendChild(container)
-
-  camera = new THREE.PerspectiveCamera(
+export function init(container) {
+  camera = new Three.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     1,
     3000,
   )
-  camera.position.z = 1000
+  camera.position.z = 1100
 
-  scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(0x000000, 0.0007)
+  scene = new Three.Scene()
+  // scene.fog = new Three.FogExp2(0x000000, 0.0007)
 
-  geometry = new THREE.Geometry()
+  _.map(data, (row, rowIndex) => {
+    _.map(row, (digit, columnIndex) => {
+      const colorIndex = parseInt(digit, 16)
 
-  for (i = 0; i < 20000; i++) {
-    let vertex = new THREE.Vector3()
-    vertex.x = Math.random() * 2000 - 1000
-    vertex.y = Math.random() * 2000 - 1000
-    vertex.z = Math.random() * 2000 - 1000
+      const vertex = new Three.Vector3()
+      vertex.x = rowIndex * PIXEL_SIZE - 500
+      vertex.y = columnIndex * PIXEL_SIZE - 500
+      vertex.z = 0
 
-    geometry.vertices.push(vertex)
-  }
+      const geometry = colorMap[colorIndex].geometry
+      geometry.vertices.push(vertex)
+    })
+  })
 
-  parameters = [
-    [[1, 1, 0.5], 5],
-    [[0.95, 1, 0.5], 4],
-    [[0.9, 1, 0.5], 3],
-    [[0.85, 1, 0.5], 2],
-    [[0.8, 1, 0.5], 1],
-  ]
+  const geometries = _.map(colorMap, ({ geometry }) => geometry)
+  _.map(geometries, (geometry, colorIndex) => {
+    const color = getHexColorByIndex(colorIndex)
+    const size = PIXEL_SIZE * 1.35
 
-  for (i = 0; i < parameters.length; i++) {
-    color = parameters[i][0]
-    size = parameters[i][1]
+    const material = new Three.PointsMaterial({ size })
+    material.color.setHex(color)
 
-    materials[i] = new THREE.PointsMaterial({ size: size })
+    const particles = new Three.Points(geometry, material)
 
-    particles = new THREE.Points(geometry, materials[i])
-
-    particles.rotation.x = Math.random() * 6
-    particles.rotation.y = Math.random() * 6
-    particles.rotation.z = Math.random() * 6
+    colorMap[colorIndex].material = material
+    colorMap[colorIndex].particles = particles
 
     scene.add(particles)
-  }
-
-  renderer = new THREE.WebGLRenderer()
+  })
+  //
+  renderer = new Three.WebGLRenderer()
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
   container.appendChild(renderer.domElement)
 
-  document.addEventListener('mousemove', onDocumentMouseMove, false)
-  document.addEventListener('touchstart', onDocumentTouchStart, false)
-  document.addEventListener('touchmove', onDocumentTouchMove, false)
-
-  //
-
-  window.addEventListener('resize', onWindowResize, false)
+  // document.addEventListener('mousemove', onDocumentMouseMove, false)
+  // document.addEventListener('touchstart', onDocumentTouchStart, false)
+  // document.addEventListener('touchmove', onDocumentTouchMove, false)
+  // window.addEventListener('resize', onWindowResize, false)
 }
 
 function onWindowResize() {
@@ -117,36 +110,34 @@ function onDocumentTouchMove(event) {
   }
 }
 
-//
-
-function animate() {
-  requestAnimationFrame(animate)
-
-  render()
-}
-
 function render() {
   let time = Date.now() * 0.00005
-
-  camera.position.x += (mouseX - camera.position.x) * 0.05
-  camera.position.y += (-mouseY - camera.position.y) * 0.05
-
-  camera.lookAt(scene.position)
-
-  for (i = 0; i < scene.children.length; i++) {
-    let object = scene.children[i]
-
-    if (object instanceof THREE.Points) {
-      object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1))
-    }
-  }
-
-  for (i = 0; i < materials.length; i++) {
-    color = parameters[i][0]
-
-    h = 360 * (color[0] + time) % 360 / 360
-    materials[i].color.setHSL(h, color[1], color[2])
-  }
+  //
+  // camera.position.x += (mouseX - camera.position.x) * 0.05
+  // camera.position.y += (-mouseY - camera.position.y) * 0.05
+  //
+  // camera.lookAt(scene.position)
+  //
+  // for (let i = 0; i < scene.children.length; i++) {
+  //   let object = scene.children[i]
+  //
+  //   if (object instanceof Three.Points) {
+  //     object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1))
+  //   }
+  // }
+  // const materials = colorMap.materials()
+  // _.map(materials, (material, index) => {
+  //   const color = getHexColorByIndex(index)
+  //
+  //   const h = 360 * (color + time) % 360 / 360
+  //   material.color.setHSL(h, color[1], color[2])
+  // })
 
   renderer.render(scene, camera)
+}
+
+function getHexColorByIndex(colorIndex) {
+  const colorString = colors[colorIndex]
+  const color = parseInt(colorString.replace(/^#/, ''), 16)
+  return color
 }
