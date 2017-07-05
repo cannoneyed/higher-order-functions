@@ -1,18 +1,21 @@
-import * as Three from 'three'
+import * as THREE from 'three'
+import MakeOrbitControls from 'three-orbit-controls'
+const OrbitControls = MakeOrbitControls(THREE)
+
 import data from 'data/data.json'
 import _ from 'lodash'
 
 import { colors, PIXEL_SIZE } from './constants'
 
 const colorMap = _.range(14).map(() => ({
-  geometry: new Three.Geometry(),
+  geometry: new THREE.Geometry(),
 }))
 
 colorMap.geometries = () => _.map(colorMap, ({ geometry }) => geometry)
 colorMap.materials = () => _.map(colorMap, ({ material }) => material)
 colorMap.particles = () => _.map(colorMap, ({ particles }) => particles)
 
-let camera, scene, renderer
+let camera, scene, renderer, controls
 let mouseX = 0,
   mouseY = 0
 
@@ -25,24 +28,25 @@ export function animate() {
 }
 
 export function init(container) {
-  camera = new Three.PerspectiveCamera(
+  camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     1,
     3000,
   )
-  camera.position.z = 1100
+  camera.position.z = 800
+  controls = new OrbitControls(camera)
 
-  scene = new Three.Scene()
-  // scene.fog = new Three.FogExp2(0x000000, 0.0007)
+  scene = new THREE.Scene()
+  // scene.fog = new THREE.FogExp2(0x000000, 0.0007)
 
   _.map(data, (row, rowIndex) => {
     _.map(row, (digit, columnIndex) => {
       const colorIndex = parseInt(digit, 16)
 
-      const vertex = new Three.Vector3()
-      vertex.x = rowIndex * PIXEL_SIZE - 500
-      vertex.y = columnIndex * PIXEL_SIZE - 500
+      const vertex = new THREE.Vector3()
+      vertex.x = rowIndex * PIXEL_SIZE - 1100
+      vertex.y = columnIndex * PIXEL_SIZE - 700
       vertex.z = 0
 
       const geometry = colorMap[colorIndex].geometry
@@ -55,10 +59,10 @@ export function init(container) {
     const color = getHexColorByIndex(colorIndex)
     const size = PIXEL_SIZE * 1.35
 
-    const material = new Three.PointsMaterial({ size })
+    const material = new THREE.PointsMaterial({ size })
     material.color.setHex(color)
 
-    const particles = new Three.Points(geometry, material)
+    const particles = new THREE.Points(geometry, material)
 
     colorMap[colorIndex].material = material
     colorMap[colorIndex].particles = particles
@@ -66,7 +70,7 @@ export function init(container) {
     scene.add(particles)
   })
   //
-  renderer = new Three.WebGLRenderer()
+  renderer = new THREE.WebGLRenderer()
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
   container.appendChild(renderer.domElement)
@@ -121,7 +125,7 @@ function render() {
   // for (let i = 0; i < scene.children.length; i++) {
   //   let object = scene.children[i]
   //
-  //   if (object instanceof Three.Points) {
+  //   if (object instanceof THREE.Points) {
   //     object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1))
   //   }
   // }
