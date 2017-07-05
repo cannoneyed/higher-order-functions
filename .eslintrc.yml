@@ -9,9 +9,10 @@ env:
   es6: true
 
 globals:
-  require: true
+  __dirname: true
   module: true
   process: true
+  require: true
 
 plugins: [ 'react', 'prettier' ]
 

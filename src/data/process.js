@@ -1,8 +1,13 @@
 const fs = require('fs')
+const path = require('path')
 
-const txt = fs.readFileSync('./mathematica-output.txt', 'utf8')
+const txt = fs.readFileSync(
+  path.resolve(__dirname, './mathematica-output.txt'),
+  'utf8',
+)
 
-const output = txt
+// First, transform the output to the correct hex string formatting
+const parsed = txt
   .replace(/13/g, 'D')
   .replace(/12/g, 'C')
   .replace(/11/g, 'B')
@@ -11,8 +16,30 @@ const output = txt
   .replace(/\n/, '')
   .replace(/^\{/, '[')
   .replace(/\}$/, ']')
-  .replace(/\{/g, '\"')
-  .replace(/\}/g, '\",\n')
+  .replace(/\{/g, '"')
+  .replace(/\}/g, '",\n')
   .replace(/,\n\]$/, '\n]')
 
-fs.writeFileSync('./data.json', output, 'utf-8')
+// Turn the data into a JS object for processing
+const data = JSON.parse(parsed)
+
+// Rotate the output -90 degrees
+const nRows = data.length
+const nCols = data[0].length
+
+const output = []
+
+for (let col = nCols - 1; col >= 0; col--) {
+  const colIndex = nCols - 1 - col
+  output[colIndex] = ''
+  for (let row = 0; row < nRows - 1; row++) {
+    const digit = data[row][col]
+    output[colIndex] += digit
+  }
+}
+
+fs.writeFileSync(
+  path.resolve(__dirname, './data.json'),
+  JSON.stringify(output),
+  'utf-8',
+)
