@@ -1,17 +1,14 @@
 import * as THREE from 'three'
+import TWEEN from 'tween.js'
 import MakeOrbitControls from 'three-orbit-controls'
 const OrbitControls = MakeOrbitControls(THREE)
 
-import _ from 'lodash'
-
 import particleManager from './particle-manager'
 
-let camera, scene, renderer, controls
-let mouseX = 0,
-  mouseY = 0
+const CAMERA_MIN = 2
+const CAMERA_MAX = 800
 
-let windowHalfX = window.innerWidth / 2
-let windowHalfY = window.innerHeight / 2
+let camera, scene, renderer, controls
 
 export function animate() {
   requestAnimationFrame(animate)
@@ -25,7 +22,7 @@ export function init(container) {
     1,
     30000,
   )
-  camera.position.z = 800
+  camera.position.z = CAMERA_MIN
   controls = new OrbitControls(camera)
 
   scene = new THREE.Scene()
@@ -38,15 +35,12 @@ export function init(container) {
   renderer.setSize(window.innerWidth, window.innerHeight)
   container.appendChild(renderer.domElement)
 
-  document.addEventListener('mousemove', onDocumentMouseMove, false)
-  document.addEventListener('touchstart', onDocumentTouchStart, false)
-  document.addEventListener('touchmove', onDocumentTouchMove, false)
   window.addEventListener('resize', onWindowResize, false)
 }
 
 function onWindowResize() {
-  windowHalfX = window.innerWidth / 2
-  windowHalfY = window.innerHeight / 2
+  // windowHalfX = window.innerWidth / 2
+  // windowHalfY = window.innerHeight / 2
 
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
@@ -54,39 +48,60 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
-function onDocumentMouseMove(event) {
-  mouseX = event.clientX - windowHalfX
-  mouseY = event.clientY - windowHalfY
-}
+let isActive = false
+let start
+const TIME_OFFSET = 800
 
-function onDocumentTouchStart(event) {
-  if (event.touches.length === 1) {
-    event.preventDefault()
+const ANIMATION_TIME = 30000
+const SWING = 500
 
-    mouseX = event.touches[0].pageX - windowHalfX
-    mouseY = event.touches[0].pageY - windowHalfY
-  }
-}
-
-function onDocumentTouchMove(event) {
-  if (event.touches.length === 1) {
-    event.preventDefault()
-
-    mouseX = event.touches[0].pageX - windowHalfX
-    mouseY = event.touches[0].pageY - windowHalfY
-  }
-}
+const zoomParam = { z: CAMERA_MIN }
+const timeParam = { t: 0.00004 }
+const swingParam = { s: 1 }
 
 function render() {
-  let time = Date.now() * 0.00005
+  if (isActive) {
+    const now = Date.now()
+    const elapsed = now - start
 
-  for (let i = 0; i < scene.children.length; i++) {
-    let object = scene.children[i]
+    TWEEN.update()
 
-    if (object instanceof THREE.Points) {
-      object.position.z = Math.sin(time * i) * 500
+    let time = (elapsed + TIME_OFFSET) * timeParam.t
+
+    camera.position.z = zoomParam.z
+    for (let i = 0; i < scene.children.length; i++) {
+      let object = scene.children[i]
+
+      if (object instanceof THREE.Points) {
+        object.position.z = Math.sin(time * i) * SWING * swingParam.s
+      }
+    }
+
+    if (elapsed >= ANIMATION_TIME) {
+      console.log(elapsed, ANIMATION_TIME)
+      isActive = false
     }
   }
 
   renderer.render(scene, camera)
+}
+
+export function activate() {
+  isActive = true
+  start = Date.now()
+
+  new TWEEN.Tween(zoomParam)
+    .to({ z: CAMERA_MAX }, ANIMATION_TIME * 0.95)
+    .easing(TWEEN.Easing.Quintic.InOut)
+    .start()
+
+  new TWEEN.Tween(timeParam)
+    .to({ t: 0.00006 }, ANIMATION_TIME)
+    .easing(TWEEN.Easing.Quadratic.In)
+    .start()
+
+  new TWEEN.Tween(swingParam)
+    .to({ s: 0 }, ANIMATION_TIME)
+    .easing(TWEEN.Easing.Quintic.InOut)
+    .start()
 }
