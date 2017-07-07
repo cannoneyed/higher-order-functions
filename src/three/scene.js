@@ -4,10 +4,21 @@ import TWEEN from 'tween.js'
 // const OrbitControls = MakeOrbitControls(THREE)
 
 import particleManager from './particle-manager'
+import sceneManager from 'core/scene'
 
-const CAMERA_MIN = 2
-const CAMERA_MAX = 400
+// Constants
+const ZOOM = {
+  min: 2,
+  max: 800,
+  point: 20,
+}
+const ANIMATION_OFFSET = 800
 
+const ANIMATION_TIME = 3000
+const ZOOM_TIME = 3000
+const SWING = 500
+
+// Closure variables
 let camera, scene, renderer, raycaster
 
 export function animate() {
@@ -22,12 +33,10 @@ export function init(container) {
     1,
     30000,
   )
-  camera.position.z = CAMERA_MIN
+  camera.position.z = ZOOM.min
   // controls = new OrbitControls(camera)
 
   raycaster = new THREE.Raycaster()
-  // raycaster.params.Points.threshold = 0.1
-
   scene = new THREE.Scene()
 
   particleManager.addParticlesToScene(scene)
@@ -49,16 +58,12 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight)
 }
 
+// Animation state machine
 let isAnimationActive = false
 let isAnimationFinished = false
 let start
-const TIME_OFFSET = 800
 
-const ANIMATION_TIME = 3000
-const ZOOM_TIME = 3000
-const SWING = 500
-
-const zoomParam = { z: CAMERA_MIN, x: 0, y: 0 }
+const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
 const timeParam = { t: 0.00004 }
 const swingParam = { s: 1 }
 
@@ -69,27 +74,24 @@ function render() {
     const now = Date.now()
     const elapsed = now - start
 
-    let time = (elapsed + TIME_OFFSET) * timeParam.t
+    let time = (elapsed + ANIMATION_OFFSET) * timeParam.t
 
-    for (let i = 0; i < scene.children.length; i++) {
-      let object = scene.children[i]
+    const particles = particleManager.particles
+    for (let i = 0; i < particles.length; i++) {
+      const object = particles[i]
+      object.position.z = Math.sin(time * i) * SWING * swingParam.s
+    }
 
-      if (object instanceof THREE.Points) {
-        object.position.z = Math.sin(time * i) * SWING * swingParam.s
-      }
+    // Add in a quick override of the swing tween, since it ought to
+    // stop at approximately 80% of the animation time
+    if (elapsed > ANIMATION_TIME * 0.8) {
+      swingParam.s = 0
+      sceneManager.isInteractive = true
     }
 
     if (elapsed >= ANIMATION_TIME) {
       isAnimationActive = false
       isAnimationFinished = true
-
-      // Make sure we zero everything out
-      for (let i = 0; i < scene.children.length; i++) {
-        let object = scene.children[i]
-        if (object instanceof THREE.Points) {
-          object.position.z = Math.sin(time * i) * SWING * swingParam.s
-        }
-      }
     }
   }
 
@@ -100,29 +102,48 @@ function render() {
   renderer.render(scene, camera)
 }
 
-window.addEventListener('click', function(ev) {
+export function click(event) {
+  if (!sceneManager.isInteractive) {
+    return
+  }
+
   const mouse = new THREE.Vector2()
   mouse.x = event.clientX / window.innerWidth * 2 - 1
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
 
-  raycaster.params.Points.threshold = 2
+  raycaster.params.Points.threshold = sceneManager.isZoomedIn ? 2 : 4
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
 
   let intersects = raycaster.intersectObjects(particleManager.particles)
 
   if (intersects.length > 0) {
-    const { index, object } = intersects[0]
+    const intersect = intersects[0]
+    const { index, object } = intersect
+
+    // We'll want to zoom out / return when clicking a black pixel
+    if (object.colorIndex === 13) {
+      return zoomOut()
+    }
+
     const point = object.geometry.vertices[index]
     zoomToPoint(point)
+  } else {
+    zoomOut()
   }
-})
+}
 
 function zoomOut() {
+  sceneManager.isInteractive = false
+
   new TWEEN.Tween(zoomParam)
-    .to({ x: 0, y: 0, z: CAMERA_MAX }, ZOOM_TIME)
+    .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
+    .onComplete(() => {
+      sceneManager.isInteractive = true
+      sceneManager.isZoomedIn = false
+    })
 }
 
 function zoomToPoint(point) {
@@ -135,11 +156,17 @@ function zoomToPoint(point) {
   }
 
   const { x, y } = point
+  const pixel = particleManager.getPixelFromCoordinates(x, y)
+  sceneManager.selectPixel(pixel)
 
   new TWEEN.Tween(zoomParam)
-    .to({ x, y, z: CAMERA_MIN * 10 }, ZOOM_TIME)
+    .to({ x, y, z: ZOOM.point }, ZOOM_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
+    .onComplete(() => {
+      sceneManager.isInteractive = true
+      sceneManager.isZoomedIn = true
+    })
 }
 
 export function activate() {
@@ -147,12 +174,12 @@ export function activate() {
   start = Date.now()
 
   new TWEEN.Tween(zoomParam)
-    .to({ z: CAMERA_MAX }, ANIMATION_TIME * 0.95)
+    .to({ z: ZOOM.max }, ANIMATION_TIME * 0.95)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 
   new TWEEN.Tween(timeParam)
-    .to({ t: 0.00006 }, ANIMATION_TIME)
+    .to({ t: timeParam.t * 1.5 }, ANIMATION_TIME)
     .easing(TWEEN.Easing.Quadratic.In)
     .start()
 

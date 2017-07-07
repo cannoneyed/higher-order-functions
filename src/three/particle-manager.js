@@ -45,8 +45,6 @@ class ParticleManager {
     const nRows = data.length
     const nCols = data[0].length
 
-    console.log(nRows, nCols)
-
     // Adjust our center to display the target white pixel as the center
     const offsetRow = nRows * PIXEL_SIZE / 2 - 0.5 * PIXEL_SIZE
     const offSetCol = nCols * PIXEL_SIZE / 2 + 7 * PIXEL_SIZE
@@ -98,7 +96,12 @@ class ParticleManager {
     }
   }
 
-  getVertexFromIndex
+  getPixelFromCoordinates = (x, y) => {
+    return {
+      row: centerRow + x / PIXEL_SIZE,
+      col: centerCol + y / PIXEL_SIZE,
+    }
+  }
 }
 
 export default new ParticleManager()

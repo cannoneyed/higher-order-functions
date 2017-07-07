@@ -7,6 +7,8 @@
     "gh-pages": "^1.0.0",
     "konva": "^1.6.3",
     "lodash": "^4.17.4",
+    "mobx": "^3.1.17",
+    "mobx-react": "^4.2.2",
     "object-assign": "4.1.1",
     "pixi.js": "^4.5.3",
     "promise": "7.1.1",
@@ -67,8 +69,13 @@
     "test": "node scripts/test.js --env=jsdom"
   },
   "babel": {
-    "presets": ["react-app"],
-    "plugins": ["transform-decorators-legacy", "transform-class-properties"]
+    "presets": [
+      "react-app"
+    ],
+    "plugins": [
+      "transform-decorators-legacy",
+      "transform-class-properties"
+    ]
   },
   "eslintConfig": {
     "extends": "react-app"

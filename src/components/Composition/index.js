@@ -1,16 +1,19 @@
 import React, { Component, PropTypes as t } from 'react'
 import ReactDOM from 'react-dom'
-import { withState } from 'recompose'
+import { observer } from 'mobx-react'
 
 import * as scene from 'three/scene'
+import sceneManager from 'core/scene'
 
-import { Stage, StageButton, StageWrapper } from './styled-components'
+import { ActivateButton, Stage, StageWrapper } from './styled-components'
 
-@withState('isActive', 'setIsActive', false)
+const BUTTON_TRANSITION_TIME = 1200
+
+@observer
 export default class Composition extends Component {
   static propTypes = {
+    activateButtonPresent: t.bool,
     isActive: t.bool,
-    setIsActive: t.func,
   }
 
   componentDidMount() {
@@ -19,17 +22,34 @@ export default class Composition extends Component {
   }
 
   activate = () => {
-    const { setIsActive } = this.props
-    setIsActive(true)
+    const { isAnimationActive } = sceneManager
+    if (isAnimationActive) {
+      return
+    }
+
+    sceneManager.isAnimationActive = true
+
     scene.activate()
+
+    setTimeout(
+      () => (sceneManager.showActivateButton = false),
+      BUTTON_TRANSITION_TIME,
+    )
   }
 
   render() {
-    const { isActive } = this.props
+    const { isAnimationActive, showActivateButton } = sceneManager
+
     return (
       <StageWrapper>
-        <Stage ref={ref => (this.stage = ref)} />
-        <StageButton onClick={this.activate} size={128} isActive={isActive} />
+        <Stage ref={ref => (this.stage = ref)} onClick={scene.click} />
+        {showActivateButton &&
+          <ActivateButton
+            onClick={this.activate}
+            size={128}
+            isActive={isAnimationActive}
+            transitionTime={BUTTON_TRANSITION_TIME}
+          />}
       </StageWrapper>
     )
   }
