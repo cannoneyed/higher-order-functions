@@ -7,8 +7,6 @@ import sceneManager from 'core/scene'
 
 import { ActivateButton, Stage, StageWrapper } from './styled-components'
 
-const BUTTON_TRANSITION_TIME = 1200
-
 @observer
 export default class Composition extends Component {
   static propTypes = {
@@ -30,25 +28,19 @@ export default class Composition extends Component {
     sceneManager.isAnimationActive = true
 
     scene.activate()
-
-    setTimeout(
-      () => (sceneManager.showActivateButton = false),
-      BUTTON_TRANSITION_TIME,
-    )
   }
 
   render() {
-    const { isAnimationActive, showActivateButton } = sceneManager
+    const { isAnimationActive, isAnimationFinished } = sceneManager
 
     return (
       <StageWrapper>
         <Stage ref={ref => (this.stage = ref)} onClick={scene.click} />
-        {showActivateButton &&
+        {!isAnimationFinished &&
           <ActivateButton
             onClick={this.activate}
             size={128}
             isActive={isAnimationActive}
-            transitionTime={BUTTON_TRANSITION_TIME}
           />}
       </StageWrapper>
     )

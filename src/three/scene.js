@@ -59,8 +59,6 @@ function onWindowResize() {
 }
 
 // Animation state machine
-let isAnimationActive = false
-let isAnimationFinished = false
 let start
 
 const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
@@ -70,7 +68,7 @@ const swingParam = { s: 1 }
 function render() {
   TWEEN.update()
 
-  if (isAnimationActive) {
+  if (sceneManager.isAnimationActive) {
     const now = Date.now()
     const elapsed = now - start
 
@@ -90,8 +88,8 @@ function render() {
     }
 
     if (elapsed >= ANIMATION_TIME) {
-      isAnimationActive = false
-      isAnimationFinished = true
+      sceneManager.isAnimationActive = false
+      sceneManager.isAnimationFinished = true
     }
   }
 
@@ -147,7 +145,7 @@ function zoomOut() {
 }
 
 function zoomToPoint(point) {
-  if (!isAnimationFinished) {
+  if (!sceneManager.isAnimationFinished) {
     return
   }
 
@@ -170,7 +168,7 @@ function zoomToPoint(point) {
 }
 
 export function activate() {
-  isAnimationActive = true
+  sceneManager.isAnimationActive = true
   start = Date.now()
 
   new TWEEN.Tween(zoomParam)

@@ -4,12 +4,12 @@ class SceneManager {
   @observable isZoomedIn = false
   @observable isInteractive = false
   @observable isAnimationActive = false
-  @observable showActivateButton = true
+  @observable isAnimationFinished = false
 
-  @observable selectedPoint = null
+  @observable selectedPixel = null
 
   selectPixel = ({ row, col }) => {
-    console.log('🍕', { row, col })
+    this.selectedPixel = { row, col }
   }
 }
 

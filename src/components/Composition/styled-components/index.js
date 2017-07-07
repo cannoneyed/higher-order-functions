@@ -32,7 +32,7 @@ export const ActivateButton = styled.div`
     ${props => (props.isActive ? '' : hover)};
   }
 
-  transition: all ${props => (props.isActive ? props.transitionTime : 250)}ms
+  transition: all ${props => (props.isActive ? 1200 : 250)}ms
     cubic-bezier(0.000, 1.020, 0.510, 0.950);
 `
 
