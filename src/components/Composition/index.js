@@ -2,7 +2,7 @@ import React, { Component, PropTypes as t } from 'react'
 import ReactDOM from 'react-dom'
 import { withState } from 'recompose'
 
-import { init, animate, activate } from 'three/scene'
+import * as scene from 'three/scene'
 
 import { Stage, StageButton, StageWrapper } from './styled-components'
 
@@ -15,14 +15,13 @@ export default class Composition extends Component {
 
   componentDidMount() {
     const container = ReactDOM.findDOMNode(this.stage)
-    init(container)
-    animate()
+    scene.init(container)
   }
 
   activate = () => {
     const { setIsActive } = this.props
     setIsActive(true)
-    activate()
+    scene.activate()
   }
 
   render() {

@@ -14,5 +14,3 @@ export const colors = [
   '#cedf05', // 12: Hue[.2, .9, 1]
   '#000600', // 13: black
 ]
-
-export const PIXEL_SIZE = 10

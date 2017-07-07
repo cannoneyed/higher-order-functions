@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import _ from 'lodash'
-import { colors, PIXEL_SIZE } from './constants'
+import { colors } from './constants'
 import data from 'data/data.json'
 
 const N_GROUPS = 3
-const ADJUST = 4 / 3
+const ADJUST = 1.325
 const MAGIC_NUMBER = 551
+const PIXEL_SIZE = 10
 
 const centerRow = 132
 const centerCol = 76
@@ -46,6 +47,7 @@ class ParticleManager {
 
     console.log(nRows, nCols)
 
+    // Adjust our center to display the target white pixel as the center
     const offsetRow = nRows * PIXEL_SIZE / 2 - 0.5 * PIXEL_SIZE
     const offSetCol = nCols * PIXEL_SIZE / 2 + 7 * PIXEL_SIZE
 
@@ -95,6 +97,8 @@ class ParticleManager {
       scene.add(this.particles[i])
     }
   }
+
+  getVertexFromIndex
 }
 
 export default new ParticleManager()
