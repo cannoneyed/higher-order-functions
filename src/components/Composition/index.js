@@ -34,12 +34,22 @@ export default class Composition extends Component {
   }
 
   render() {
-    const { isAnimationActive, isAnimationFinished, tileSize } = sceneManager
+    const {
+      isAnimationActive,
+      isAnimationFinished,
+      isInteractive,
+      tileSize,
+    } = sceneManager
+
+    let showActivateButton = !isInteractive
+    if (isAnimationFinished) {
+      showActivateButton = false
+    }
 
     return (
       <StageWrapper>
         <Stage ref={ref => (this.stage = ref)} onClick={scene.click} />
-        {!isAnimationFinished &&
+        {showActivateButton &&
           <ActivateButton
             onClick={this.activate}
             size={tileSize}

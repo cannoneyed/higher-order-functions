@@ -63,7 +63,7 @@ let start
 
 const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
 const timeParam = { t: 0.00004 }
-const swingParam = { s: 1 }
+const swingParam = { s: 1, stop: false }
 
 function render() {
   TWEEN.update()
@@ -77,13 +77,14 @@ function render() {
     const particles = particleManager.particles
     for (let i = 0; i < particles.length; i++) {
       const object = particles[i]
-      object.position.z = Math.sin(time * i) * SWING * swingParam.s
+      const s = swingParam.stop ? 0 : swingParam.s
+      object.position.z = Math.sin(time * i) * SWING * s
     }
 
     // Add in a quick override of the swing tween, since it ought to
     // stop at approximately 80% of the animation time
-    if (elapsed > ANIMATION_TIME * 0.8) {
-      swingParam.s = 0
+    if (elapsed > ANIMATION_TIME * 0.85 && !swingParam.stop) {
+      swingParam.stop = true
       sceneManager.isInteractive = true
     }
 
@@ -109,7 +110,7 @@ export function click(event) {
   mouse.x = event.clientX / window.innerWidth * 2 - 1
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
 
-  raycaster.params.Points.threshold = sceneManager.isZoomedIn ? 2 : 4
+  raycaster.params.Points.threshold = sceneManager.isZoomedIn ? 2 : 6
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
 
@@ -150,7 +151,7 @@ function zoomOut() {
 }
 
 function zoomToPoint(point, colorIndex) {
-  if (!sceneManager.isAnimationFinished) {
+  if (!sceneManager.isInteractive) {
     return
   }
 
