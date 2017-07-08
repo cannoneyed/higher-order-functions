@@ -5,6 +5,7 @@ import { observer } from 'mobx-react'
 import * as scene from 'three/scene'
 import sceneManager from 'core/scene'
 
+import Title from 'components/Title'
 import SoundPlayer from 'components/SoundPlayer'
 
 import { ActivateButton, Stage, StageWrapper } from './styled-components'
@@ -45,6 +46,7 @@ export default class Composition extends Component {
             isActive={isAnimationActive}
           />}
         <SoundPlayer />
+        <Title />
       </StageWrapper>
     )
   }

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import _ from 'lodash'
-import { colors } from './constants'
+import colors from 'constants/colors'
 import data from 'data/data.json'
 
 const N_GROUPS = 3

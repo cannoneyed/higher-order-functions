@@ -1,5 +1,5 @@
 import WaveSurfer from 'wavesurfer.js'
-import { colors } from 'three/constants'
+import colors from 'constants/colors'
 
 const mp3Url =
   'https://s3-us-west-2.amazonaws.com/clips.higher-order-functions/08.mp3'
@@ -18,9 +18,11 @@ class SoundManager {
     const complimentIndex = row * col % 12
     const progressColor = compliments[complimentIndex]
 
+    const light = colorIndex === 0 || colorIndex === 12
+
     this.wavesurfer = WaveSurfer.create({
       container: '#waveform',
-      waveColor: '#c7d9e7',
+      waveColor: light ? colors[13] : colors[0],
       progressColor,
       barWidth: 2,
       height: sceneManager.tileSize / 3,
@@ -30,14 +32,10 @@ class SoundManager {
   }
 
   loadSound = ({ row, col, colorIndex }) => {
-    if (this.wavesurfer) {
-      this.wavesurfer.destroy()
-    }
+    this.unloadSound()
 
     this.initializePlayer({ row, col, colorIndex })
-
     this.wavesurfer.load(mp3Url)
-    this.isLoaded = false
 
     this.wavesurfer.on('ready', () => {
       this.isLoaded = true
@@ -46,7 +44,9 @@ class SoundManager {
 
   unloadSound = () => {
     this.isLoaded = false
-    this.wavesurfer.destroy()
+    if (this.wavesurfer) {
+      this.wavesurfer.destroy()
+    }
   }
 
   playSound = () => {

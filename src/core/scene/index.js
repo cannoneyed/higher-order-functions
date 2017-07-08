@@ -12,7 +12,7 @@ class SceneManager {
 
   @observable tileSize = 128
 
-  selectPixel = ({ row, col }, colorIndex) => {
+  selectPixel = ({ row, col, colorIndex }) => {
     this.selectedPixel = { row, col, colorIndex }
 
     // We need to delay the loading of the sound to prevent redraw of

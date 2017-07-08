@@ -14,7 +14,7 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 30000
+const ANIMATION_TIME = 3000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -132,6 +132,10 @@ export function click(event) {
 }
 
 function zoomOut() {
+  if (!sceneManager.isZoomedIn) {
+    return
+  }
+
   sceneManager.isInteractive = false
   sceneManager.deselectPixel()
 
@@ -152,9 +156,10 @@ function zoomToPoint(point, colorIndex) {
 
   const { x, y } = point
   const pixel = particleManager.getPixelFromCoordinates(x, y)
+  pixel.colorIndex = colorIndex
 
   sceneManager.isInteractive = false
-  sceneManager.selectPixel(pixel, colorIndex)
+  sceneManager.selectPixel(pixel)
 
   new TWEEN.Tween(zoomParam)
     .to({ x, y, z: ZOOM.point }, ZOOM_TIME)

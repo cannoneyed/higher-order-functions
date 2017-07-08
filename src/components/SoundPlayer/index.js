@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import styled from 'styled-components'
 import { observer } from 'mobx-react'
 
+import Hash from 'components/Hash'
+
 import sceneManager from 'core/scene'
 import soundManager from 'core/sound'
 
@@ -18,6 +20,7 @@ export default class SoundPlayer extends Component {
           isInteractive={isInteractive}
           onClick={soundManager.playSound}
         />
+        <Hash />
       </SoundPlayerWrapper>
     )
   }

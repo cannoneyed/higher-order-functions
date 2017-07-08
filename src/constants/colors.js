@@ -1,4 +1,4 @@
-export const colors = [
+export default [
   '#c7d9e7', // 0: white
   '#f8a600', // 1: yellow
   '#dd602b', // 2: Hue[.13, 90, 1]
