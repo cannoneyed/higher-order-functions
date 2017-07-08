@@ -14,7 +14,7 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 30000
+const ANIMATION_TIME = 3000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -125,7 +125,7 @@ export function click(event) {
     }
 
     const point = object.geometry.vertices[index]
-    zoomToPoint(point)
+    zoomToPoint(point, object.colorIndex)
   } else {
     zoomOut()
   }
@@ -133,6 +133,7 @@ export function click(event) {
 
 function zoomOut() {
   sceneManager.isInteractive = false
+  sceneManager.deselectPixel()
 
   new TWEEN.Tween(zoomParam)
     .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_TIME)
@@ -144,18 +145,16 @@ function zoomOut() {
     })
 }
 
-function zoomToPoint(point) {
+function zoomToPoint(point, colorIndex) {
   if (!sceneManager.isAnimationFinished) {
     return
   }
 
-  if (zoomParam.z < 100) {
-    zoomOut()
-  }
-
   const { x, y } = point
   const pixel = particleManager.getPixelFromCoordinates(x, y)
-  sceneManager.selectPixel(pixel)
+
+  sceneManager.isInteractive = false
+  sceneManager.selectPixel(pixel, colorIndex)
 
   new TWEEN.Tween(zoomParam)
     .to({ x, y, z: ZOOM.point }, ZOOM_TIME)

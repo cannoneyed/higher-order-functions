@@ -5,6 +5,8 @@ import { observer } from 'mobx-react'
 import * as scene from 'three/scene'
 import sceneManager from 'core/scene'
 
+import SoundPlayer from 'components/SoundPlayer'
+
 import { ActivateButton, Stage, StageWrapper } from './styled-components'
 
 @observer
@@ -31,7 +33,7 @@ export default class Composition extends Component {
   }
 
   render() {
-    const { isAnimationActive, isAnimationFinished } = sceneManager
+    const { isAnimationActive, isAnimationFinished, tileSize } = sceneManager
 
     return (
       <StageWrapper>
@@ -39,9 +41,10 @@ export default class Composition extends Component {
         {!isAnimationFinished &&
           <ActivateButton
             onClick={this.activate}
-            size={128}
+            size={tileSize}
             isActive={isAnimationActive}
           />}
+        <SoundPlayer />
       </StageWrapper>
     )
   }
