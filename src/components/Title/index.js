@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import styled from 'styled-components'
 import { observer } from 'mobx-react'
 
+import colors from 'constants/colors'
 import sceneManager from 'core/scene'
 
 import Fade from 'components/Fade'
@@ -15,12 +16,25 @@ export default class TitleComponent extends Component {
     return (
       <Fade visible={visible}>
         <TitleWrapper>
-          <Title>/doglogic: higher order functions</Title>
+          <Title>
+            <Prompt>/~​‌đ​‌oglogic: </Prompt>
+            <Name>higher or​‌đ​‌er functions</Name>
+          </Title>
         </TitleWrapper>
       </Fade>
     )
   }
 }
+
+const Prompt = styled.span`
+  color: ${colors[1]};
+  /* multi-line */
+`
+
+const Name = styled.span`
+  color: ${colors[0]};
+  /* multi-line */
+`
 
 const TitleWrapper = styled.div`
   pointer-events: none;
