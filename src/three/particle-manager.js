@@ -11,10 +11,13 @@ const PIXEL_SIZE = 10
 const centerRow = 132
 const centerCol = 76
 
+// Make more groups for white (colorIndex === 0)
+const getNGroups = colorIndex => (colorIndex === 0 ? N_GROUPS * 3 : N_GROUPS)
+
 class ParticleManager {
   constructor() {
-    this.geometries = _.range(colors.length).map(() =>
-      _.range(N_GROUPS).map(() => new THREE.Geometry()),
+    this.geometries = _.range(colors.length).map(colorIndex =>
+      _.range(getNGroups(colorIndex)).map(() => new THREE.Geometry()),
     )
 
     this.particles = []
@@ -30,7 +33,7 @@ class ParticleManager {
   addColorVertex = (colorIndex, rowIndex, colIndex, vertex) => {
     // Pseudo hashing function to assign a vertex to a particle group
     const calc = rowIndex + colIndex + rowIndex * rowIndex * colIndex
-    const groupNumber = (calc >> MAGIC_NUMBER) % (N_GROUPS - 1) // eslint-disable-line no-bitwise
+    const groupNumber = (calc >> MAGIC_NUMBER) % (getNGroups(colorIndex) - 1) // eslint-disable-line no-bitwise
 
     let geometry = this.getGeometry(colorIndex, groupNumber)
 
