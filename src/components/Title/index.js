@@ -17,7 +17,7 @@ export default class TitleComponent extends Component {
       <Fade visible={visible}>
         <TitleWrapper>
           <Title>
-            <Prompt>/~​‌đ​‌oglogic: </Prompt>
+            <Prompt>/~​‌d‌oglogic: </Prompt>
             <Name>higher or​‌đ​‌er functions</Name>
           </Title>
         </TitleWrapper>
