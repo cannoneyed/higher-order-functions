@@ -5,6 +5,7 @@
   "dependencies": {
     "dotenv": "4.0.0",
     "expose-loader": "^0.7.3",
+    "fluent-ffmpeg": "^2.1.2",
     "gh-pages": "^1.0.0",
     "konva": "^1.6.3",
     "lodash": "^4.17.4",
