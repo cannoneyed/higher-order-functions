@@ -3,17 +3,17 @@ const P = require('bluebird')
 const ProgressBar = require('progress')
 const _ = require('lodash')
 const path = require('path')
-const fs = require('fs')
 
 const { song, songKey } = require('./song-data')
 const { mixes } = require('./clip-mixes')
 
 const beats = song.beats || 4
 
-P.coroutine(function*() {
-  yield shiftClips()
-  // yield processTracks()
-})()
+async function processSong() {
+  await shiftClips()
+  // await processTracks()
+}
+processSong()
 
 function shiftClips() {
   const shiftedClips = {}

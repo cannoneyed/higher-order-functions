@@ -7,16 +7,28 @@ const { bars } = require('./song-data')
 const maxClipInstances = 4
 const maxPixelCount = 2194
 
-//
-//
 // Iterate over all mapped bars, creating all mix slugs: each clip is mixed
 // solo, with a maximum number of instances, and then we begin creating
 // submixes:
 const mixes = {}
 const getNSlugs = () => Object.keys(mixes).length
+const getNMixes = () =>
+  _.reduce(
+    mixes,
+    (sum, entry) => {
+      return entry.count + sum
+    },
+    0,
+  )
 
+// Keep track of the mix's index position - we'll want the earliest added mixes to have first
+// priority to be recorded
+let index = 0
 const addClips = (slug, clips) => {
-  mixes[slug] = mixes[slug] || { count: 0, clips: [] }
+  if (!mixes[slug]) {
+    mixes[slug] = { count: 0, clips: [], index }
+    index++
+  }
 
   if (mixes[slug].count < maxClipInstances) {
     mixes[slug].clips = clips
@@ -83,6 +95,6 @@ while (getNSlugs() < maxPixelCount && n < biggestClipGroup) {
   n++
 }
 
-console.log('🍕', getNSlugs())
+console.log(`🍒 grouped into ${getNMixes()} submixes`)
 
 module.exports.mixes = mixes

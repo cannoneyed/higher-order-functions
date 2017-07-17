@@ -5,7 +5,7 @@ const parse = require('csv-parse/lib/sync')
 
 const songs = require('./songs')
 
-const songIndex = 0
+const songIndex = 6
 const song = songs[songIndex]
 
 const songKey = `${song.index}-${song.title.replace(/ /g, '-')}`
