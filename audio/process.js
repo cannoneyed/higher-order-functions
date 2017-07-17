@@ -2,137 +2,123 @@ const ffmpeg = require('fluent-ffmpeg')
 const P = require('bluebird')
 const ProgressBar = require('progress')
 const _ = require('lodash')
-const fs = require('fs')
 const path = require('path')
-const parse = require('csv-parse/lib/sync')
-const Combinatorics = require('js-combinatorics')
+const fs = require('fs')
 
-const trackKey = '01-higher-order'
-const CLIPS_DIR =
-  '/Users/andrewcoenen/Desktop/deconstructed-higher-order-functions'
-const trackDir = `${CLIPS_DIR}/${trackKey}`
+const { song, songKey } = require('./song-data')
+const { mixes } = require('./clip-mixes')
 
-// Load the csv track index
-const csv = fs.readFileSync(
-  path.resolve(__dirname, `./track-indexes/${trackKey}.csv`),
-)
+const beats = song.beats || 4
 
-const bars = _.reduce(
-  _.range(50),
-  (output, index) => {
-    output[index * 4 + 1] = []
-    return output
-  },
-  {},
-)
+P.coroutine(function*() {
+  yield shiftClips()
+  // yield processTracks()
+})()
 
-const rows = parse(csv, { columns: true })
-let missingFiles = []
-
-_.map(rows, row => {
-  const trackType = _.trim(row['Track Type'])
-  const trackName = _.trim(row['Track Name'])
-
-  const track = `${trackType} - ${trackName}`
-
-  // Iterate over each bar, mapping files to bars
-  _.map(bars, (items, bar) => {
-    let clipIndex = _.trim(row[bar])
-    if (!clipIndex) {
-      return
-    }
-
-    let shift = 0
-    // Handle shifted positions
-    if (clipIndex.indexOf('+') !== -1) {
-      shift = _.last(clipIndex.split('+'))
-      clipIndex = _.first(clipIndex.split('+'))
-    }
-
-    let name
-    if (clipIndex === 'X') {
-      name = `${track}`
-    } else {
-      name = `${track} - ${clipIndex}`
-    }
-
-    const filename = `${trackDir}/${name}.aif`
-    if (!fs.existsSync(filename)) {
-      missingFiles.push(name)
-    }
-
-    bars[bar].push({
-      name,
-      filename,
-      shift,
+function shiftClips() {
+  const shiftedClips = {}
+  _.map(mixes, mixObj => {
+    const clips = mixObj.clips
+    _.map(clips, clip => {
+      if (clip.shifted) {
+        shiftedClips[`${clip.name}-${clip.shifted}`] = clip
+      }
     })
   })
-})
 
-if (missingFiles.length) {
-  console.log('Missing files: ', _.unique(missingFiles))
-  throw new Error()
-}
-
-const alphabetic = (a, b) => {
-  if (a.firstname < b.firstname) return -1
-  if (a.firstname > b.firstname) return 1
-  return 0
-}
-
-const mixSlugs = {}
-_.map(bars, (clips, bar) => {
-  _.map(clips, clip => {
-    const { name, shift } = clip
-    if (shift) {
-      return
-    }
-    mixSlugs[name] = [clip]
+  const shiftedClipNames = Object.keys(shiftedClips)
+  console.log(`🍒 shifting ${shiftedClipNames.length} clips`)
+  const bar = new ProgressBar('[:bar] :current/:total', {
+    total: shiftedClipNames.length,
   })
 
-  if (clips.length < 2) {
-    return
-  }
+  return P.map(
+    shiftedClipNames,
+    clipName => {
+      const clip = shiftedClips[clipName]
+      return shiftClip(clip).then(() => bar.tick())
+    },
+    { concurrency: 1 },
+  )
+}
 
-  const comb = Combinatorics.combination(clips, 2)
-  let a
-  while ((a = comb.next())) {
-    const sorted = a.sort(alphabetic)
-    const slug = sorted.map(item => item.name).join('|')
-    mixSlugs[slug] = sorted
-  }
-})
+function shiftClip(clip) {
+  return new Promise((resolve, reject) => {
+    const { filename, shifted } = clip
 
-const nSlugs = Object.keys(mixSlugs).length
-console.log(`🍒 generating ${nSlugs} clips`)
-const bar = new ProgressBar(':bar', { total: nSlugs })
+    const bpm = typeof song.bpm === 'function' ? song.bpm(clip.bar) : song.bpm
+    const shift = shifted * beats * 60 / bpm
+    const shiftedFilename = `${filename.replace(
+      '.aif',
+      '',
+    )} - shifted-${shifted}.wav`
+    clip.shiftedFilename = shiftedFilename
 
-P.map(
-  Object.keys(mixSlugs),
-  (slug, index) => {
-    const files = mixSlugs[slug]
-    const outputName = path.resolve(
-      __dirname,
-      'output',
-      trackKey,
-      `${index}.mp3`,
-    )
-    return P.delay(2)
-      .then(() => outputAudio(files, outputName))
-      .then(() => bar.tick())
-  },
-  { concurrency: 1 },
-).then(() => {
-  console.log('🍒 done!')
-})
+    return createSilence(shift).then(() => {
+      ffmpeg()
+        .input(path.resolve(__dirname, './silence.wav'))
+        .input(filename)
+        .complexFilter(['[0:0][1:0]concat=n=2:v=0:a=1'])
+        .audioChannels(2)
+        .output(shiftedFilename)
+        .on('end', () => {
+          resolve()
+        })
+        .run()
+    })
+  })
+}
+
+function createSilence(t) {
+  return new Promise((resolve, reject) => {
+    ffmpeg()
+      .outputOptions(['-y'])
+      .input('anullsrc=r=44100:cl=2')
+      .inputFormat('lavfi')
+      .duration(t)
+      .output(path.resolve(__dirname, './silence.wav'))
+      .on('end', () => {
+        resolve()
+      })
+      .run()
+  })
+}
+
+function processTracks() {
+  const nSlugs = Object.keys(mixes).length
+  console.log(`🍒 generating ${nSlugs} clips`)
+  const bar = new ProgressBar('[:bar] :current/:total', { total: nSlugs })
+
+  return P.map(
+    Object.keys(mixes),
+    (slug, index) => {
+      const files = mixes[slug]
+      const outputName = path.resolve(
+        __dirname,
+        'output',
+        songKey,
+        `${index}.mp3`,
+      )
+      return outputAudio(files, outputName).then(() => bar.tick())
+    },
+    { concurrency: 1 },
+  ).then(() => {
+    console.log('🍒 done!')
+  })
+}
 
 function outputAudio(files, outputName) {
   return new Promise((resolve, reject) => {
     const cmd = ffmpeg().outputOptions(['-y'])
 
     for (let file of files) {
-      const { filename } = file
-      cmd.input(filename)
+      const { filename, shift, shiftedFilename } = file
+
+      if (shift && files.length > 1) {
+        cmd.input(shiftedFilename)
+      } else {
+        cmd.input(filename)
+      }
     }
 
     const mixInputs = files.map((file, i) => `[${i}:0]`).join('')
