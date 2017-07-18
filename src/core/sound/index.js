@@ -3,7 +3,7 @@ import colors from 'constants/colors'
 import hash from '../../utils/hash'
 
 const urlRoot =
-  'https://s3-us-west-2.amazonaws.com/clips.higher-order-functions'
+  'https://s3-us-west-2.amazonaws.com/higher-order-functions.clips'
 
 import sceneManager from 'core/scene'
 
@@ -37,7 +37,8 @@ class SoundManager {
 
     this.initializePlayer({ row, col, colorIndex })
     const hashStr = hash({ row, col })
-    const mp3Url = `${urlRoot}/${hashStr}.mp3`
+    const hashDir = hash[0]
+    const mp3Url = `${urlRoot}/${hashDir}/${hashStr}.mp3`
     this.wavesurfer.load(mp3Url)
 
     this.wavesurfer.on('ready', () => {
