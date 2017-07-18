@@ -13,7 +13,7 @@ module.exports = function addHashes(submixes) {
   let correspondingColorIndex
   if (songIndex === 8) {
     correspondingColorIndex = 6
-  } else if (songIndex >= 10) {
+  } else if (songIndex >= 9) {
     correspondingColorIndex = songIndex - 1
   } else {
     correspondingColorIndex = songIndex
@@ -25,7 +25,12 @@ module.exports = function addHashes(submixes) {
       const colorIndex = parseInt(color, 16)
 
       if (colorIndex === correspondingColorIndex) {
-        const hashStr = hash({ row: rowIndex, col: colIndex })
+        let hashStr = hash({ row: rowIndex, col: colIndex })
+        // Substitute the first character of the hash string with the corresponding color
+        // (adjusting for the grouping of tracks 7 and 9)
+        const newHex = correspondingColorIndex.toString(16)
+        hashStr = `${newHex}${hashStr.substring(1, 4)}`
+
         hashes.push(hashStr)
       }
     })

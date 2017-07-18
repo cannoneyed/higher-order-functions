@@ -2,8 +2,8 @@ import WaveSurfer from 'wavesurfer.js'
 import colors from 'constants/colors'
 import hash from '../../utils/hash'
 
-const urlRoot = 'http://127.0.0.1:8080'
-// const urlRoot = 'https://s3-us-west-2.amazonaws.com/clips.higher-order-functions'
+const urlRoot =
+  'https://s3-us-west-2.amazonaws.com/clips.higher-order-functions'
 
 import sceneManager from 'core/scene'
 
