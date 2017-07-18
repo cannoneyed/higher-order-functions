@@ -26,6 +26,7 @@ class SoundManager {
       waveColor: light ? colors[13] : colors[0],
       progressColor,
       barWidth: 2,
+      normalize: true,
       height: sceneManager.tileSize / 3,
       cursorWidth: 0,
       interact: false,
