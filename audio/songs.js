@@ -48,7 +48,7 @@ module.exports = [
     prefix: '8',
   },
   {
-    title: 'level 9',
+    title: 'level nine',
     index: '09',
     bpm: 140,
     prefix: '7',
