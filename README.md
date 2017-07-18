@@ -1,1 +1,1 @@
-# Dog Logic - Higher Order Functions
+# /~dog logic: higher order functions
