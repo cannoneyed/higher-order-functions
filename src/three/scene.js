@@ -14,7 +14,7 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 30000
+const ANIMATION_TIME = 3000
 const ZOOM_TIME = 3000
 const SWING = 500
 

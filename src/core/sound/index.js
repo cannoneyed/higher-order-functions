@@ -1,8 +1,8 @@
 import WaveSurfer from 'wavesurfer.js'
 import colors from 'constants/colors'
+import hash from '../../utils/hash'
 
-const mp3Url =
-  'https://s3-us-west-2.amazonaws.com/clips.higher-order-functions/08.mp3'
+const urlRoot = 'http://127.0.0.1:8080'
 
 import sceneManager from 'core/scene'
 
@@ -35,6 +35,8 @@ class SoundManager {
     this.unloadSound()
 
     this.initializePlayer({ row, col, colorIndex })
+    const hashStr = hash({ row, col })
+    const mp3Url = `${urlRoot}/${hashStr}.mp3`
     this.wavesurfer.load(mp3Url)
 
     this.wavesurfer.on('ready', () => {

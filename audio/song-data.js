@@ -5,75 +5,79 @@ const parse = require('csv-parse/lib/sync')
 
 const songs = require('./songs')
 
-const songIndex = 6
-const song = songs[songIndex]
+module.exports.getSongData = _.memoize(songIndex => {
+  const song = songs[songIndex]
 
-const songKey = `${song.index}-${song.title.replace(/ /g, '-')}`
-const CLIPS_DIR =
-  '/Users/andrewcoenen/Desktop/deconstructed-higher-order-functions'
-const songDir = `${CLIPS_DIR}/${songKey}`
+  const songKey = `${song.index}-${song.title.replace(/ /g, '-')}`
+  const CLIPS_DIR =
+    '/Users/andrewcoenen/Desktop/deconstructed-higher-order-functions'
+  const songDir = `${CLIPS_DIR}/${songKey}`
 
-// Load the csv track index
-const csv = fs.readFileSync(
-  path.resolve(__dirname, `./track-indexes/${songKey}.csv`),
-)
-const rows = parse(csv, { columns: true })
+  // Load the csv track index
+  const csv = fs.readFileSync(
+    path.resolve(__dirname, `./track-indexes/${songKey}.csv`),
+  )
+  const rows = parse(csv, { columns: true })
 
-// Parse the bars of the song, which are the numbered keys of any given row
-const bars = {}
-_.map(rows[0], (value, key) => {
-  if (parseInt(key) > 0) {
-    bars[key] = []
-  }
-})
-
-// Parse each row, constructing a map of all clips arranged per bar
-let missingFiles = []
-_.map(rows, row => {
-  const trackType = _.trim(row['Track Type'])
-  const trackName = _.trim(row['Track Name'])
-
-  const track = `${trackType} - ${trackName}`
-
-  // Iterate over each bar, mapping files to bars
-  _.map(bars, (items, bar) => {
-    let clipIndex = _.trim(row[bar])
-    if (!clipIndex) {
-      return
+  // Parse the bars of the song, which are the numbered keys of any given row
+  const bars = {}
+  _.map(rows[0], (value, key) => {
+    if (parseInt(key) > 0) {
+      bars[key] = []
     }
+  })
 
-    let shifted = 0
-    // Handle shifted positions
-    if (clipIndex.indexOf('+') !== -1) {
-      shifted = _.last(clipIndex.split('+'))
-      clipIndex = _.first(clipIndex.split('+'))
-    }
+  // Parse each row, constructing a map of all clips arranged per bar
+  let missingFiles = []
+  _.map(rows, row => {
+    const trackType = _.trim(row['Track Type'])
+    const trackName = _.trim(row['Track Name'])
 
-    let name
-    if (clipIndex === 'X') {
-      name = `${track}`
-    } else {
-      name = `${track} - ${clipIndex}`
-    }
+    const track = `${trackType} - ${trackName}`
 
-    const filename = `${songDir}/${name}.aif`
-    if (!fs.existsSync(filename)) {
-      missingFiles.push(name)
-    }
+    // Iterate over each bar, mapping files to bars
+    _.map(bars, (items, bar) => {
+      let clipIndex = _.trim(row[bar])
+      if (!clipIndex) {
+        return
+      }
 
-    bars[bar].push({
-      name,
-      filename,
-      shifted,
+      let shifted = 0
+      // Handle shifted positions
+      if (clipIndex.indexOf('+') !== -1) {
+        shifted = _.last(clipIndex.split('+'))
+        clipIndex = _.first(clipIndex.split('+'))
+      }
+
+      let name
+      if (clipIndex === 'X') {
+        name = `${track}`
+      } else {
+        name = `${track} - ${clipIndex}`
+      }
+
+      const filename = `${songDir}/${name}.aif`
+      if (!fs.existsSync(filename)) {
+        missingFiles.push(name)
+      }
+
+      bars[bar].push({
+        name,
+        filename,
+        shifted,
+      })
     })
   })
+
+  if (missingFiles.length) {
+    console.log('Missing files: ', _.uniq(missingFiles))
+    throw new Error()
+  }
+
+  return {
+    bars,
+    song,
+    songKey,
+    songIndex,
+  }
 })
-
-if (missingFiles.length) {
-  console.log('Missing files: ', _.uniq(missingFiles))
-  throw new Error()
-}
-
-module.exports.bars = bars
-module.exports.song = song
-module.exports.songKey = songKey

@@ -4,15 +4,25 @@ const ProgressBar = require('progress')
 const _ = require('lodash')
 const path = require('path')
 
-const { song, songKey } = require('./song-data')
-const { mixes } = require('./clip-mixes')
+const { getSongData } = require('./song-data')
+const { getMixes } = require('./clip-mixes')
 
+const songIndex = process.argv[2]
+
+if (!songIndex) {
+  throw new Error('Did not specify a song index')
+}
+
+const { bars, song, songKey } = getSongData(songIndex)
+const mixes = getMixes(bars)
 const beats = song.beats || 4
 
-async function processSong() {
-  await shiftClips()
-  // await processTracks()
-}
+const processSong = P.coroutine(function*() {
+  console.log(`🍒 processing track ${songIndex + 1}: ${song.title}`)
+
+  yield shiftClips()
+  yield processTracks()
+})
 processSong()
 
 function shiftClips() {
@@ -85,21 +95,22 @@ function createSilence(t) {
 }
 
 function processTracks() {
-  const nSlugs = Object.keys(mixes).length
-  console.log(`🍒 generating ${nSlugs} clips`)
-  const bar = new ProgressBar('[:bar] :current/:total', { total: nSlugs })
+  console.log(`🍒 generating ${mixes.length} clips`)
+  const bar = new ProgressBar('[:bar] :current/:total', {
+    total: mixes.length,
+  })
 
   return P.map(
-    Object.keys(mixes),
-    (slug, index) => {
-      const files = mixes[slug]
+    mixes,
+    submix => {
+      const { clips, hash } = submix
       const outputName = path.resolve(
         __dirname,
         'output',
         songKey,
-        `${index}.mp3`,
+        `${hash}.mp3`,
       )
-      return outputAudio(files, outputName).then(() => bar.tick())
+      return outputAudio(clips, outputName).then(() => bar.tick())
     },
     { concurrency: 1 },
   ).then(() => {
@@ -107,26 +118,27 @@ function processTracks() {
   })
 }
 
-function outputAudio(files, outputName) {
+function outputAudio(clips, outputName) {
   return new Promise((resolve, reject) => {
     const cmd = ffmpeg().outputOptions(['-y'])
 
-    for (let file of files) {
-      const { filename, shift, shiftedFilename } = file
+    for (let clip of clips) {
+      const { filename, shift, shiftedFilename } = clip
 
-      if (shift && files.length > 1) {
+      if (shift && clips.length > 1) {
         cmd.input(shiftedFilename)
       } else {
         cmd.input(filename)
       }
     }
 
-    const mixInputs = files.map((file, i) => `[${i}:0]`).join('')
-    const mixString = `${mixInputs}amix=inputs=${files.length}:duration=longest[out]`
-    const volString = `[out]volume=${files.length}`
+    const mixInputs = clips.map((clip, i) => `[${i}:0]`).join('')
+    const mixString = `${mixInputs}amix=inputs=${clips.length}:duration=longest[a]`
+    const volString = `[a]volume=${clips.length}[b]`
+    const normString = '[b]dynaudnorm'
 
     cmd
-      .complexFilter([mixString, volString])
+      .complexFilter([mixString, volString, normString])
       .audioChannels(2)
       .audioCodec('libmp3lame')
       .audioQuality(0)
