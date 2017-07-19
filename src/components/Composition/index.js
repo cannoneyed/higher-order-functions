@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import { observer } from 'mobx-react'
 import { withRoute } from 'react-router5'
+import { getPixelFromHash } from 'utils/hash'
 
 import * as scene from 'three/scene'
 import sceneManager from 'core/scene'
@@ -21,7 +22,17 @@ export default class Composition extends Component {
     scene.init(container, initialHash)
   }
 
-  componentWillReceiveProps(nextProps) {}
+  componentWillReceiveProps(nextProps) {
+    if (this.props.route.path !== nextProps.route.path) {
+      const hashStr = nextProps.route.params.hash
+      if (hashStr) {
+        const pixel = getPixelFromHash(hashStr)
+        scene.zoomToPixel(pixel)
+      } else {
+        scene.zoomOut()
+      }
+    }
+  }
 
   activate = () => {
     const { isAnimationActive } = sceneManager

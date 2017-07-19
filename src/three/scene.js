@@ -15,9 +15,13 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 3000
+const ANIMATION_TIME = 30000
 const ZOOM_TIME = 3000
 const SWING = 500
+
+const tweens = {
+  zoom: null,
+}
 
 // Closure variables
 let camera, scene, renderer, raycaster
@@ -124,34 +128,38 @@ export function click(event, router) {
 
   let intersects = raycaster.intersectObjects(particleManager.particles)
 
+  if (!sceneManager.isInteractive) {
+    return
+  }
+
   if (intersects.length > 0) {
     const intersect = intersects[0]
     const { index, object } = intersect
 
     // We'll want to zoom out / return when clicking a black pixel
     if (object.colorIndex === 13) {
-      zoomOut()
-      return router.navigate('default')
+      router.navigate('default')
     }
 
     const point = object.geometry.vertices[index]
-    const hashStr = zoomToPoint(point)
-    return router.navigate('hash', { hash: hashStr })
+    const { x, y } = point
+    const pixel = particleManager.getPixelFromCoordinates(x, y)
+    const hashStr = hash(pixel)
+    router.navigate('hash', { hash: hashStr })
   } else {
-    zoomOut()
-    return router.navigate('default')
+    router.navigate('default')
   }
 }
 
-function zoomOut() {
-  if (!sceneManager.isZoomedIn) {
-    return
-  }
-
+export function zoomOut() {
   sceneManager.isInteractive = false
   sceneManager.deselectPixel()
 
-  new TWEEN.Tween(zoomParam)
+  if (tweens.zoom) {
+    tweens.zoom.stop()
+  }
+
+  tweens.zoom = new TWEEN.Tween(zoomParam)
     .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
@@ -172,19 +180,17 @@ function zoomToInitialPixel(pixel, colorIndex) {
   zoomParam.z = ZOOM.point
 }
 
-function zoomToPoint(point) {
-  if (!sceneManager.isInteractive) {
-    return
+export function zoomToPixel(pixel) {
+  if (tweens.zoom) {
+    tweens.zoom.stop()
   }
 
-  const { x, y } = point
-  const pixel = particleManager.getPixelFromCoordinates(x, y)
-  const hashStr = hash(pixel)
+  const { x, y } = particleManager.getPointFromPixel(pixel)
 
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)
 
-  new TWEEN.Tween(zoomParam)
+  tweens.zoom = new TWEEN.Tween(zoomParam)
     .to({ x, y, z: ZOOM.point }, ZOOM_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
@@ -192,25 +198,23 @@ function zoomToPoint(point) {
       sceneManager.isInteractive = true
       sceneManager.isZoomedIn = true
     })
-
-  return hashStr
 }
 
 export function activate() {
   sceneManager.isAnimationActive = true
   start = Date.now()
 
-  new TWEEN.Tween(zoomParam)
+  tweens.zoom = new TWEEN.Tween(zoomParam)
     .to({ z: ZOOM.max }, ANIMATION_TIME * 0.95)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 
-  new TWEEN.Tween(timeParam)
+  tweens.time = new TWEEN.Tween(timeParam)
     .to({ t: timeParam.t * 1.5 }, ANIMATION_TIME)
     .easing(TWEEN.Easing.Quadratic.In)
     .start()
 
-  new TWEEN.Tween(swingParam)
+  tweens.swing = new TWEEN.Tween(swingParam)
     .to({ s: 0 }, ANIMATION_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
