@@ -105,6 +105,13 @@ class ParticleManager {
       col: centerCol + y / PIXEL_SIZE,
     }
   }
+
+  getPointFromPixel = ({ row, col }) => {
+    return {
+      x: (row - centerRow) * PIXEL_SIZE,
+      y: (col - centerCol) * PIXEL_SIZE,
+    }
+  }
 }
 
 export default new ParticleManager()

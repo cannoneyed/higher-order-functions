@@ -42,4 +42,15 @@ function hash(pixel) {
   return hashes[row][col]
 }
 
+function getPixelFromHash(hashStr) {
+  for (let i = 0; i < hashes.length; i++) {
+    for (let j = 0; j < hashes[i].length; j++) {
+      if (hashes[i][j] === hashStr) {
+        return { row: i, col: j }
+      }
+    }
+  }
+}
+
 module.exports = hash
+module.exports.getPixelFromHash = _.memoize(getPixelFromHash)

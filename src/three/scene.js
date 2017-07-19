@@ -5,6 +5,7 @@ import TWEEN from 'tween.js'
 
 import particleManager from './particle-manager'
 import sceneManager from 'core/scene'
+import { getPixelFromHash } from 'utils/hash'
 
 // Constants
 const ZOOM = {
@@ -26,7 +27,7 @@ export function animate() {
   render()
 }
 
-export function init(container) {
+export function init(container, initialHash) {
   camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
@@ -47,6 +48,13 @@ export function init(container) {
   container.appendChild(renderer.domElement)
 
   window.addEventListener('resize', onWindowResize, false)
+
+  if (initialHash) {
+    const initialPixel = getPixelFromHash(initialHash)
+    if (initialPixel) {
+      zoomToInitialPixel(initialPixel)
+    }
+  }
 
   animate()
 }
@@ -150,14 +158,24 @@ function zoomOut() {
     })
 }
 
-function zoomToPoint(point, colorIndex) {
+function zoomToInitialPixel(pixel, colorIndex) {
+  sceneManager.selectPixel(pixel)
+  const point = particleManager.getPointFromPixel(pixel)
+
+  sceneManager.isInteractive = true
+  sceneManager.isZoomedIn = true
+  zoomParam.x = point.x
+  zoomParam.y = point.y
+  zoomParam.z = ZOOM.point
+}
+
+function zoomToPoint(point) {
   if (!sceneManager.isInteractive) {
     return
   }
 
   const { x, y } = point
   const pixel = particleManager.getPixelFromCoordinates(x, y)
-  pixel.colorIndex = colorIndex
 
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)

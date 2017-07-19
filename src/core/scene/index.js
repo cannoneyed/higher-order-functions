@@ -1,6 +1,7 @@
 import { observable } from 'mobx'
 
 import soundManager from 'core/sound'
+import data from '../../data/data.json'
 
 class SceneManager {
   @observable isZoomedIn = false
@@ -12,7 +13,10 @@ class SceneManager {
 
   @observable tileSize = 128
 
-  selectPixel = ({ row, col, colorIndex }) => {
+  selectPixel = ({ row, col }) => {
+    const color = data[row][col]
+    const colorIndex = parseInt(color, 16)
+
     this.selectedPixel = { row, col, colorIndex }
 
     // We need to delay the loading of the sound to prevent redraw of
