@@ -134,7 +134,7 @@ function outputAudio(clips, outputName) {
 
     const mixInputs = clips.map((clip, i) => `[${i}:0]`).join('')
     const mixString = `${mixInputs}amix=inputs=${clips.length}:duration=longest[a]`
-    const volString = `[a]volume=${clips.length}[b]`
+    const volString = `[a]volume=${clips.length * song.volume || 1}[b]`
     const normString = '[b]dynaudnorm'
 
     cmd
