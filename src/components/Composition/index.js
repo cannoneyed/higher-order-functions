@@ -21,6 +21,8 @@ export default class Composition extends Component {
     scene.init(container, initialHash)
   }
 
+  componentWillReceiveProps(nextProps) {}
+
   activate = () => {
     const { isAnimationActive } = sceneManager
     if (isAnimationActive) {
@@ -28,8 +30,12 @@ export default class Composition extends Component {
     }
 
     sceneManager.isAnimationActive = true
-
     scene.activate()
+  }
+
+  handleStageClick = event => {
+    const { router } = this.props
+    scene.click(event, router)
   }
 
   render() {
@@ -47,7 +53,10 @@ export default class Composition extends Component {
 
     return (
       <StageWrapper>
-        <Stage ref={ref => (this.stage = ref)} onClick={scene.click} />
+        <Stage
+          ref={ref => (this.stage = ref)}
+          onClick={this.handleStageClick}
+        />
         {showActivateButton &&
           <ActivateButton
             onClick={this.activate}

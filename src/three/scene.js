@@ -5,7 +5,7 @@ import TWEEN from 'tween.js'
 
 import particleManager from './particle-manager'
 import sceneManager from 'core/scene'
-import { getPixelFromHash } from 'utils/hash'
+import hash, { getPixelFromHash } from 'utils/hash'
 
 // Constants
 const ZOOM = {
@@ -15,7 +15,7 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 30000
+const ANIMATION_TIME = 3000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -109,7 +109,7 @@ function render() {
   renderer.render(scene, camera)
 }
 
-export function click(event) {
+export function click(event, router) {
   if (!sceneManager.isInteractive) {
     return
   }
@@ -130,13 +130,16 @@ export function click(event) {
 
     // We'll want to zoom out / return when clicking a black pixel
     if (object.colorIndex === 13) {
-      return zoomOut()
+      zoomOut()
+      return router.navigate('default')
     }
 
     const point = object.geometry.vertices[index]
-    zoomToPoint(point, object.colorIndex)
+    const hashStr = zoomToPoint(point)
+    return router.navigate('hash', { hash: hashStr })
   } else {
     zoomOut()
+    return router.navigate('default')
   }
 }
 
@@ -176,6 +179,7 @@ function zoomToPoint(point) {
 
   const { x, y } = point
   const pixel = particleManager.getPixelFromCoordinates(x, y)
+  const hashStr = hash(pixel)
 
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)
@@ -188,6 +192,8 @@ function zoomToPoint(point) {
       sceneManager.isInteractive = true
       sceneManager.isZoomedIn = true
     })
+
+  return hashStr
 }
 
 export function activate() {
