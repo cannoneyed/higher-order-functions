@@ -3,7 +3,7 @@ import TWEEN from 'tween.js'
 // import MakeOrbitControls from 'three-orbit-controls'
 // const OrbitControls = MakeOrbitControls(THREE)
 
-import particleManager from './particle-manager'
+import ParticleManager from './particle-manager'
 import sceneManager from 'core/scene'
 
 // Constants
@@ -19,7 +19,7 @@ const ZOOM_TIME = 3000
 const SWING = 500
 
 // Closure variables
-let camera, scene, renderer, raycaster
+let camera, scene, renderer, raycaster, particleManager
 
 export function animate() {
   requestAnimationFrame(animate)
@@ -39,11 +39,13 @@ export function init(container) {
   raycaster = new THREE.Raycaster()
   scene = new THREE.Scene()
 
-  particleManager.addParticlesToScene(scene)
-
   renderer = new THREE.WebGLRenderer()
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
+
+  particleManager = new ParticleManager(renderer)
+  particleManager.addParticlesToScene(scene)
+
   container.appendChild(renderer.domElement)
 
   window.addEventListener('resize', onWindowResize, false)
@@ -121,7 +123,6 @@ export function click(event) {
   if (intersects.length > 0) {
     const intersect = intersects[0]
 
-    const getRowCol
 
     console.log('🍕', intersect.point)
     return

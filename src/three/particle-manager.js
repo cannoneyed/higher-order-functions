@@ -10,7 +10,8 @@ const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
 const N_GROUPS = 3
 const ADJUST = 2.94
 const MAGIC_NUMBER = 551
-const PIXEL_SIZE = 10
+
+let PIXEL_SIZE = 10
 
 const centerRow = 132
 const centerCol = 76
@@ -41,8 +42,8 @@ const vertexShader = `
 const getNGroups = colorIndex =>
   colorIndex * 1 === 0 ? N_GROUPS * 3 : N_GROUPS
 
-class ParticleManager {
-  constructor() {
+export default class ParticleManager {
+  constructor(renderer) {
     const countsByColor = {}
     _.map(data, (row, rowIndex) => {
       _.map(row, (color, colIndex) => {
@@ -63,9 +64,16 @@ class ParticleManager {
     })
 
     this.particles = []
+    this.renderer = renderer
+    this.initializeRenderer()
 
     this.addColorVertices()
     this.createBufferGeometries()
+  }
+
+  initializeRenderer = () => {
+    PIXEL_SIZE = this.renderer.getSize().height / data.length
+    console.log('🍕', PIXEL_SIZE)
   }
 
   getBufferGeometry(colorIndex, groupIndex) {
@@ -173,8 +181,6 @@ class ParticleManager {
 
   getPixelFromRealCoordinates = (x, y) => {}
 }
-
-export default new ParticleManager()
 
 function getColorByIndex(colorIndex) {
   return threeColorsByIndex[colorIndex]
