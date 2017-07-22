@@ -14,6 +14,24 @@ let PIXEL_SIZE = 10
 const centerRow = 132
 const centerCol = 76
 
+const fragmentShader = `
+    varying vec3 vColor;
+    void main() {
+        gl_FragColor = vec4( vColor, 1.0 );
+    }
+`
+
+const vertexShader = `
+    attribute float size;
+    uniform vec3 color;
+    varying vec3 vColor;
+    void main() {
+        vColor = color;
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_Position = projectionMatrix * mvPosition;
+    }
+`
+
 // Make more groups for white (colorIndex === 0)
 const getNGroups = colorIndex =>
   colorIndex * 1 === 0 ? N_GROUPS * 3 : N_GROUPS
@@ -66,7 +84,6 @@ export default class PixelManager {
       bufferGeometry = this.getBufferGeometry(0, 0)
     }
 
-    const color = getColorByIndex(colorIndex)
     const geometry = new THREE.PlaneGeometry(PIXEL_SIZE, PIXEL_SIZE)
     geometry.translate(vertex.x, vertex.y, vertex.z)
 
@@ -80,24 +97,6 @@ export default class PixelManager {
       bufferGeometry.positions.push(geometry.vertices[face.c].x)
       bufferGeometry.positions.push(geometry.vertices[face.c].y)
       bufferGeometry.positions.push(geometry.vertices[face.c].z)
-      bufferGeometry.normals.push(face.normal.x)
-      bufferGeometry.normals.push(face.normal.y)
-      bufferGeometry.normals.push(face.normal.z)
-      bufferGeometry.normals.push(face.normal.x)
-      bufferGeometry.normals.push(face.normal.y)
-      bufferGeometry.normals.push(face.normal.z)
-      bufferGeometry.normals.push(face.normal.x)
-      bufferGeometry.normals.push(face.normal.y)
-      bufferGeometry.normals.push(face.normal.z)
-      bufferGeometry.colors.push(color.r)
-      bufferGeometry.colors.push(color.g)
-      bufferGeometry.colors.push(color.b)
-      bufferGeometry.colors.push(color.r)
-      bufferGeometry.colors.push(color.g)
-      bufferGeometry.colors.push(color.b)
-      bufferGeometry.colors.push(color.r)
-      bufferGeometry.colors.push(color.g)
-      bufferGeometry.colors.push(color.b)
     })
   }
 
@@ -132,15 +131,18 @@ export default class PixelManager {
         const { geometry, positions, colors, normals } = bufferGeometry
 
         const bufferPositions = new THREE.Float32BufferAttribute(positions, 3)
-        const bufferColors = new THREE.Float32BufferAttribute(colors, 3)
-        const bufferNormals = new THREE.Float32BufferAttribute(normals, 3)
-
         geometry.addAttribute('position', bufferPositions)
-        geometry.addAttribute('color', bufferColors)
-        geometry.addAttribute('normal', bufferNormals)
 
-        const material = new THREE.MeshBasicMaterial({
-          vertexColors: THREE.VertexColors,
+        const color = getColorByIndex(colorIndex)
+
+        const uniforms = {
+          color: { value: color },
+        }
+
+        const material = new THREE.ShaderMaterial({
+          uniforms,
+          fragmentShader,
+          vertexShader,
         })
 
         geometry.computeBoundingSphere()
