@@ -14,7 +14,7 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 30000
+const ANIMATION_TIME = 3000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -64,6 +64,8 @@ let start
 const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
 const timeParam = { t: 0.00004 }
 const swingParam = { s: 1, stop: false }
+
+window.zoomParam = zoomParam
 
 function render() {
   TWEEN.update()
@@ -118,6 +120,12 @@ export function click(event) {
 
   if (intersects.length > 0) {
     const intersect = intersects[0]
+
+    const getRowCol
+
+    console.log('🍕', intersect.point)
+    return
+
     const { index, object } = intersect
 
     // We'll want to zoom out / return when clicking a black pixel

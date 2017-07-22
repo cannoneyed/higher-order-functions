@@ -1,33 +1,75 @@
 import * as THREE from 'three'
 import _ from 'lodash'
-import colors from 'constants/colors'
+import colorMap from 'constants/colors'
 import data from 'data/data.json'
 
+const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
+  return new THREE.Color(getHexColorByIndex(colorIndex))
+})
+
 const N_GROUPS = 3
-const ADJUST = 1.325
+const ADJUST = 2.94
 const MAGIC_NUMBER = 551
 const PIXEL_SIZE = 10
 
 const centerRow = 132
 const centerCol = 76
 
+const fragmentShader = `
+    uniform vec3 color;
+    uniform sampler2D texture;
+    varying vec3 vColor;
+    void main() {
+        gl_FragColor = vec4( color * vColor, 1.0 );
+        gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+    }
+`
+
+const vertexShader = `
+    attribute float size;
+    attribute vec3 customColor;
+    varying vec3 vColor;
+    void main() {
+        vColor = customColor;
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_PointSize = size * ( 300.0 / -mvPosition.z );
+        gl_Position = projectionMatrix * mvPosition;
+    }
+`
+
 // Make more groups for white (colorIndex === 0)
-const getNGroups = colorIndex => (colorIndex === 0 ? N_GROUPS * 3 : N_GROUPS)
+const getNGroups = colorIndex =>
+  colorIndex * 1 === 0 ? N_GROUPS * 3 : N_GROUPS
 
 class ParticleManager {
   constructor() {
-    this.geometries = _.range(colors.length).map(colorIndex =>
-      _.range(getNGroups(colorIndex)).map(() => new THREE.Geometry()),
-    )
+    const countsByColor = {}
+    _.map(data, (row, rowIndex) => {
+      _.map(row, (color, colIndex) => {
+        const colorIndex = parseInt(color, 16)
+        countsByColor[colorIndex] = countsByColor[colorIndex] || 0
+        countsByColor[colorIndex] += 1
+      })
+    })
+
+    this.bufferGeometries = _.map(countsByColor, (count, colorIndex) => {
+      return _.range(getNGroups(colorIndex)).map(() => ({
+        geometry: new THREE.BufferGeometry(),
+        positions: new Float32Array(count * 3),
+        colors: new Float32Array(count * 3),
+        sizes: new Float32Array(count),
+        index: 0,
+      }))
+    })
 
     this.particles = []
 
     this.addColorVertices()
-    this.assignColorsToGeometries()
+    this.createBufferGeometries()
   }
 
-  getGeometry(colorIndex, groupIndex) {
-    return this.geometries[colorIndex][groupIndex]
+  getBufferGeometry(colorIndex, groupIndex) {
+    return this.bufferGeometries[colorIndex][groupIndex]
   }
 
   addColorVertex = (colorIndex, rowIndex, colIndex, vertex) => {
@@ -35,13 +77,27 @@ class ParticleManager {
     const calc = rowIndex + colIndex + rowIndex * rowIndex * colIndex
     const groupNumber = (calc >> MAGIC_NUMBER) % (getNGroups(colorIndex) - 1) // eslint-disable-line no-bitwise
 
-    let geometry = this.getGeometry(colorIndex, groupNumber)
+    let bufferGeometry = this.getBufferGeometry(colorIndex, groupNumber)
+    const pointIndex = bufferGeometry.index
 
     // If we're the centered on white pixel, force it into group [0, 0]
     if (rowIndex === centerRow && colIndex === centerCol) {
-      geometry = this.getGeometry(0, 0)
+      bufferGeometry = this.getBufferGeometry(0, 0)
     }
-    geometry.vertices.push(vertex)
+
+    bufferGeometry.positions[pointIndex * 3] = vertex.x
+    bufferGeometry.positions[pointIndex * 3 + 1] = vertex.y
+    bufferGeometry.positions[pointIndex * 3 + 2] = vertex.z
+
+    const color = getColorByIndex(colorIndex)
+
+    bufferGeometry.colors[pointIndex * 3] = color.r
+    bufferGeometry.colors[pointIndex * 3 + 1] = color.g
+    bufferGeometry.colors[pointIndex * 3 + 2] = color.b
+
+    bufferGeometry.sizes[pointIndex] = PIXEL_SIZE * ADJUST
+
+    bufferGeometry.index += 1
   }
 
   addColorVertices = () => {
@@ -58,39 +114,48 @@ class ParticleManager {
         const digit = row[colIndex]
         const colorIndex = parseInt(digit, 16)
 
-        const vertex = new THREE.Vector3()
-        vertex.x = rowIndex * PIXEL_SIZE - offsetRow
-        vertex.y = colIndex * PIXEL_SIZE - offSetCol
-        vertex.z = 0
+        const vertex = {
+          x: rowIndex * PIXEL_SIZE - offsetRow,
+          y: colIndex * PIXEL_SIZE - offSetCol,
+          z: 0,
+        }
 
         this.addColorVertex(colorIndex, rowIndex, colIndex, vertex)
       }
     }
   }
 
-  assignColorsToGeometries = () => {
-    const geometries = this.geometries
-    for (let colorIndex = 0; colorIndex < geometries.length; colorIndex++) {
-      const geometryGroup = geometries[colorIndex]
-      for (
-        let groupIndex = 0;
-        groupIndex < geometryGroup.length;
-        groupIndex++
-      ) {
-        const geometry = geometryGroup[groupIndex]
-        const color = getHexColorByIndex(colorIndex)
-        const size = PIXEL_SIZE * ADJUST
-
-        const material = new THREE.PointsMaterial({ size })
-        material.color.setHex(color)
-
-        const particles = new THREE.Points(geometry, material)
-        particles.colorIndex = colorIndex
-        particles.groupIndex = groupIndex
-
-        this.particles.push(particles)
-      }
+  createBufferGeometries = () => {
+    const uniforms = {
+      color: { value: new THREE.Color(0xffffff) },
+      texture: {
+        value: new THREE.TextureLoader().load('sprite.png'),
+      },
     }
+    let shaderMaterial = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader,
+      fragmentShader,
+    })
+
+    _.map(this.bufferGeometries, (bufferGeometryGroup, colorIndex) => {
+      _.map(bufferGeometryGroup, bufferGeometry => {
+        const { geometry, positions, colors, sizes } = bufferGeometry
+        geometry.addAttribute(
+          'position',
+          new THREE.BufferAttribute(positions, 3),
+        )
+        geometry.addAttribute(
+          'customColor',
+          new THREE.BufferAttribute(colors, 3),
+        )
+        geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1))
+        geometry.computeBoundingSphere()
+
+        const particleSystem = new THREE.Points(geometry, shaderMaterial)
+        this.particles.push(particleSystem)
+      })
+    })
   }
 
   addParticlesToScene = scene => {
@@ -105,12 +170,18 @@ class ParticleManager {
       col: centerCol + y / PIXEL_SIZE,
     }
   }
+
+  getPixelFromRealCoordinates = (x, y) => {}
 }
 
 export default new ParticleManager()
 
+function getColorByIndex(colorIndex) {
+  return threeColorsByIndex[colorIndex]
+}
+
 function getHexColorByIndex(colorIndex) {
-  const colorString = colors[colorIndex]
+  const colorString = colorMap[colorIndex]
   const color = parseInt(colorString.replace(/^#/, ''), 16)
   return color
 }
