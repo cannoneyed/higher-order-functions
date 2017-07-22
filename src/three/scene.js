@@ -3,7 +3,7 @@ import TWEEN from 'tween.js'
 // import MakeOrbitControls from 'three-orbit-controls'
 // const OrbitControls = MakeOrbitControls(THREE)
 
-import ParticleManager from './particle-manager'
+import PixelManager from './pixel-manager'
 import sceneManager from 'core/scene'
 
 // Constants
@@ -19,7 +19,7 @@ const ZOOM_TIME = 3000
 const SWING = 500
 
 // Closure variables
-let camera, scene, renderer, raycaster, particleManager
+let camera, scene, renderer, raycaster, pixelManager
 
 export function animate() {
   requestAnimationFrame(animate)
@@ -43,8 +43,8 @@ export function init(container) {
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
 
-  particleManager = new ParticleManager(renderer)
-  particleManager.addParticlesToScene(scene)
+  pixelManager = new PixelManager(renderer)
+  pixelManager.addPixelsToScene(scene)
 
   container.appendChild(renderer.domElement)
 
@@ -78,11 +78,11 @@ function render() {
 
     let time = (elapsed + ANIMATION_OFFSET) * timeParam.t
 
-    const particles = particleManager.particles
-    for (let i = 0; i < particles.length; i++) {
-      const object = particles[i]
+    const pixelGroups = pixelManager.pixelGroups
+    for (let i = 0; i < pixelGroups.length; i++) {
+      const pixelGroup = pixelGroups[i]
       const s = swingParam.stop ? 0 : swingParam.s
-      object.position.z = Math.sin(time * i) * SWING * s
+      pixelGroup.position.z = Math.sin(time * i) * SWING * s
     }
 
     // Add in a quick override of the swing tween, since it ought to
@@ -118,11 +118,10 @@ export function click(event) {
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
 
-  let intersects = raycaster.intersectObjects(particleManager.particles)
+  let intersects = raycaster.intersectObjects(pixelManager.pixels)
 
   if (intersects.length > 0) {
     const intersect = intersects[0]
-
 
     console.log('🍕', intersect.point)
     return
@@ -159,13 +158,15 @@ function zoomOut() {
     })
 }
 
+window.zoomToPoint = zoomToPoint
+
 function zoomToPoint(point, colorIndex) {
   if (!sceneManager.isInteractive) {
     return
   }
 
   const { x, y } = point
-  const pixel = particleManager.getPixelFromCoordinates(x, y)
+  const pixel = pixelManager.getPixelFromCoordinates(x, y)
   pixel.colorIndex = colorIndex
 
   sceneManager.isInteractive = false
