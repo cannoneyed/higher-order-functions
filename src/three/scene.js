@@ -3,6 +3,17 @@ import TWEEN from 'tween.js'
 // import MakeOrbitControls from 'three-orbit-controls'
 // const OrbitControls = MakeOrbitControls(THREE)
 
+import Stats from 'stats-js'
+
+let stats = new Stats()
+stats.setMode(0) // 0: fps, 1: ms
+// Align top-left
+stats.domElement.style.position = 'absolute'
+stats.domElement.style.left = '0px'
+stats.domElement.style.top = '0px'
+
+document.body.appendChild(stats.domElement)
+
 import PixelManager from './pixel-manager'
 import sceneManager from 'core/scene'
 
@@ -14,7 +25,7 @@ const ZOOM = {
 }
 const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 3000
+const ANIMATION_TIME = 30000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -24,6 +35,7 @@ let camera, scene, renderer, raycaster, pixelManager
 export function animate() {
   requestAnimationFrame(animate)
   render()
+  stats.update()
 }
 
 export function init(container) {
