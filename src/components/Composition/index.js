@@ -23,7 +23,8 @@ export default class Composition extends Component {
   }
 
   state = {
-    isHover: false,
+    isPixelHovered: false,
+    isSkipHovered: false,
   }
 
   componentDidMount() {
@@ -39,10 +40,6 @@ export default class Composition extends Component {
 
     sceneManager.isIntroAnimationActive = true
     sceneManager.activateIntroAnimation(skip)
-  }
-
-  setHover = isHover => {
-    this.setState({ isHover })
   }
 
   render() {
@@ -62,6 +59,8 @@ export default class Composition extends Component {
     const showSkipButton =
       hasViewedIntro && !isIntroAnimationFinished && !isIntroAnimationActive
 
+    const isPixelHovered = this.state.isPixelHovered || this.state.isSkipHovered
+
     return (
       <StageWrapper>
         <Stage ref={ref => (this.stage = ref)} onClick={scene.click} />
@@ -70,16 +69,16 @@ export default class Composition extends Component {
             onClick={this.activate}
             size={tileSize}
             isActive={isIntroAnimationActive}
-            isHover={this.state.isHover}
-            onMouseEnter={() => this.setHover(true)}
-            onMouseLeave={() => this.setHover(false)}
+            isHover={isPixelHovered}
+            onMouseEnter={() => this.setState({ isPixelHovered: true })}
+            onMouseLeave={() => this.setState({ isPixelHovered: false })}
           />}
         {showSkipButton &&
           <SkipIntro
             onClick={() => this.activate({ skip: true })}
-            isHover={this.state.isHover}
-            onMouseEnter={() => this.setHover(true)}
-            onMouseLeave={() => this.setHover(false)}
+            isHover={this.state.isSkipHovered}
+            onMouseEnter={() => this.setState({ isSkipHovered: true })}
+            onMouseLeave={() => this.setState({ isSkipHovered: false })}
           >
             skip intro
           </SkipIntro>}
