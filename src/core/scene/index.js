@@ -27,7 +27,6 @@ class SceneManager {
     if (skip) {
       this.INTRO_ANIMATION_TIME = 4000
       this.INTRO_ANIMATION_OFFSET = 1600
-      console.log('skip', skip)
     }
 
     this.isIntroAnimationActive = true
