@@ -27,7 +27,7 @@ const ZOOM = {
 const ANIMATION_OFFSET = 800
 const MAX_PIXEL_SIZE_PX = 128
 
-const ANIMATION_TIME = 3000
+const ANIMATION_TIME = 30000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -174,6 +174,7 @@ function zoomOut() {
     .onComplete(() => {
       sceneManager.isInteractive = true
       sceneManager.isZoomedIn = false
+      pixelManager.updateBufferGeometry()
     })
 }
 
@@ -196,6 +197,7 @@ function zoomToPixel(pixel) {
     .onComplete(() => {
       sceneManager.isInteractive = true
       sceneManager.isZoomedIn = true
+      pixelManager.updateBufferGeometry()
     })
 }
 

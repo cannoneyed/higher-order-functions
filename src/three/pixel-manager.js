@@ -173,8 +173,6 @@ export default class PixelManager {
           vertexShader,
         })
 
-        geometry.computeBoundingSphere()
-
         const pixelGroup = new THREE.Mesh(geometry, material)
         this.pixelGroups.push(pixelGroup)
       })
@@ -188,6 +186,47 @@ export default class PixelManager {
         pixelGroup.material.uniforms.size.value = size
         pixelGroup.material.uniforms.size.needsUpdate = true
       }
+    }
+  }
+
+  // Update the positions of the buffer geometry at the end of a zoom in / out so that the raycaster
+  // can work correctly. Our actual scaling of pixels during zoom in / out relies on the glsl
+  // vertex shader, but doesn't change the underlying geometry represented in the buffer. We need
+  // to set the size of the pixel planes to the correct zoomed size once the animation is complete
+  // so that we can handle clicking on the pixels correctly
+  updateBufferGeometry() {
+    for (let i = 0; i < this.pixelGroups.length; i++) {
+      const pixelGroup = this.pixelGroups[i]
+      const size = pixelGroup.material.uniforms.size.value
+      const positionBufferArray = pixelGroup.geometry.attributes.position.array
+      const centerBufferArray = pixelGroup.geometry.attributes.center.array
+      const vertexIndexBufferArray =
+        pixelGroup.geometry.attributes.vertexIndex.array
+
+      for (let j = 0; j < positionBufferArray.length / 3; j++) {
+        const vertexIndex = vertexIndexBufferArray[j]
+        const centerX = centerBufferArray[j * 3 + 0]
+        const centerY = centerBufferArray[j * 3 + 1]
+
+        let x, y
+        if (vertexIndex === 0) {
+          x = centerX - 0.5 * size
+          y = centerY + 0.5 * size
+        } else if (vertexIndex === 1) {
+          x = centerX + 0.5 * size
+          y = centerY + 0.5 * size
+        } else if (vertexIndex === 2) {
+          x = centerX - 0.5 * size
+          y = centerY - 0.5 * size
+        } else if (vertexIndex === 3) {
+          x = centerX + 0.5 * size
+          y = centerY - 0.5 * size
+        }
+
+        positionBufferArray[j * 3 + 0] = x
+        positionBufferArray[j * 3 + 1] = y
+      }
+      pixelGroup.geometry.attributes.position.needsUpdate = true
     }
   }
 
