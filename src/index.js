@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom'
 import App from './components/App'
 import { Provider } from 'mobx-react'
 import { injectGlobal } from 'styled-components'
+import { RouterProvider } from 'react-router5'
+import createRouter from './create-router'
 
 import colors from 'constants/colors'
 
@@ -15,9 +17,16 @@ injectGlobal`
   }
 `
 
-ReactDOM.render(
-  <Provider>
-    <App />
-  </Provider>,
-  document.getElementById('root'),
+const router = createRouter(true)
+
+const Page = (
+  <RouterProvider router={router}>
+    <Provider>
+      <App />
+    </Provider>
+  </RouterProvider>
 )
+
+router.start(() => {
+  ReactDOM.render(Page, document.getElementById('root'))
+})

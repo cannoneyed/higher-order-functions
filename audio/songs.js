@@ -34,6 +34,7 @@ module.exports = [
     index: '06',
     bpm: 115,
     prefix: '5',
+    volume: 1.8,
   },
   {
     title: 'inner planets',

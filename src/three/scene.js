@@ -3,6 +3,7 @@ import TWEEN from 'tween.js'
 
 import PixelManager from './pixel-manager'
 import sceneManager from 'core/scene'
+import hash, { getPixelFromHash } from 'utils/hash'
 
 // Constants
 const ZOOM = {
@@ -14,6 +15,10 @@ const ZOOM = {
 const ZOOM_TIME = 3000
 const SWING = 500
 
+const tweens = {
+  zoom: null,
+}
+
 // Closure variables
 let camera, scene, renderer, raycaster, pixelManager
 
@@ -22,7 +27,16 @@ export function animate() {
   render()
 }
 
-export function init(container) {
+export function init(container, initialHash) {
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    1,
+    30000,
+  )
+  camera.position.z = ZOOM.min
+  // controls = new OrbitControls(camera)
+
   raycaster = new THREE.Raycaster()
   scene = new THREE.Scene()
 
@@ -41,6 +55,13 @@ export function init(container) {
   container.appendChild(renderer.domElement)
 
   window.addEventListener('resize', onWindowResize, false)
+
+  if (initialHash) {
+    const initialPixel = getPixelFromHash(initialHash)
+    if (initialPixel) {
+      zoomToInitialPixel(initialPixel)
+    }
+  }
 
   animate()
 }
@@ -101,7 +122,7 @@ function render() {
   renderer.render(scene, camera)
 }
 
-export function click(event) {
+export function click(event, router) {
   if (!sceneManager.isInteractive) {
     return
   }
@@ -116,6 +137,10 @@ export function click(event) {
 
   let intersects = raycaster.intersectObjects(pixelManager.pixelGroups)
 
+  if (!sceneManager.isInteractive) {
+    return
+  }
+
   if (intersects.length > 0) {
     const { point } = intersects[0]
     const pixel = pixelManager.getPixelFromCoordinates(point.x, point.y)
@@ -125,22 +150,25 @@ export function click(event) {
       return zoomOut()
     }
 
+    const hashStr = hash(pixel)
+    router.navigate('hash', { hash: hashStr })
+
     // const point = object.geometry.vertices[index]
     zoomToPixel(pixel)
   } else {
-    zoomOut()
+    router.navigate('default')
   }
 }
 
-function zoomOut() {
-  if (!sceneManager.isZoomedIn) {
-    return
-  }
-
+export function zoomOut() {
   sceneManager.isInteractive = false
   sceneManager.deselectPixel()
 
-  new TWEEN.Tween(zoomParam)
+  if (tweens.zoom) {
+    tweens.zoom.stop()
+  }
+
+  tweens.zoom = new TWEEN.Tween(zoomParam)
     .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
@@ -151,9 +179,20 @@ function zoomOut() {
     })
 }
 
-function zoomToPixel(pixel) {
-  if (!sceneManager.isInteractive) {
-    return
+function zoomToInitialPixel(pixel, colorIndex) {
+  sceneManager.selectPixel(pixel)
+  const { x, y } = pixelManager.getCoordinatesFromPixel(pixel)
+
+  sceneManager.isInteractive = true
+  sceneManager.isZoomedIn = true
+  zoomParam.x = x
+  zoomParam.y = y
+  zoomParam.z = ZOOM.point
+}
+
+export function zoomToPixel(pixel) {
+  if (tweens.zoom) {
+    tweens.zoom.stop()
   }
 
   const { x, y } = pixelManager.getCoordinatesFromPixel(pixel)
@@ -161,7 +200,7 @@ function zoomToPixel(pixel) {
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)
 
-  new TWEEN.Tween(zoomParam)
+  tweens.zoom = new TWEEN.Tween(zoomParam)
     .to({ x, y, z: ZOOM.point }, ZOOM_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
@@ -176,17 +215,17 @@ export function activateIntroAnimation() {
   sceneManager.isIntroAnimationActive = true
   start = Date.now()
 
-  new TWEEN.Tween(zoomParam)
+  tweens.zoom = new TWEEN.Tween(zoomParam)
     .to({ z: ZOOM.max }, sceneManager.INTRO_ANIMATION_TIME * 0.95)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 
-  new TWEEN.Tween(timeParam)
+  tweens.time = new TWEEN.Tween(timeParam)
     .to({ t: timeParam.t * 1.5 }, sceneManager.INTRO_ANIMATION_TIME)
     .easing(TWEEN.Easing.Quadratic.In)
     .start()
 
-  new TWEEN.Tween(swingParam)
+  tweens.swing = new TWEEN.Tween(swingParam)
     .to({ s: 0 }, sceneManager.INTRO_ANIMATION_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()

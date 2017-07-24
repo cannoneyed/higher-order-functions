@@ -3,6 +3,7 @@ import store from 'store'
 
 import * as scene from 'three/scene'
 import soundManager from 'core/sound'
+import data from '../../data/data.json'
 
 class SceneManager {
   @observable hasViewedIntro = false
@@ -33,7 +34,9 @@ class SceneManager {
     scene.activateIntroAnimation()
   }
 
-  selectPixel = ({ row, col, colorIndex }) => {
+  selectPixel = ({ row, col }) => {
+    const color = data[row][col]
+    const colorIndex = parseInt(color, 16)
     this.selectedPixel = { row, col, colorIndex }
 
     // We need to delay the loading of the sound to prevent redraw of

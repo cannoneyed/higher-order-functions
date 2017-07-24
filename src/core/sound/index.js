@@ -1,3 +1,4 @@
+import { observable } from 'mobx'
 import WaveSurfer from 'wavesurfer.js'
 import colors from 'constants/colors'
 import hash from '../../utils/hash'
@@ -9,7 +10,8 @@ import sceneManager from 'core/scene'
 
 class SoundManager {
   loadDelay = 200
-  isLoaded = false
+  @observable isLoaded = false
+  @observable waveColor = colors[0]
 
   initializePlayer({ row, col, colorIndex }) {
     const compliments = colors.filter((color, index) => {
@@ -20,10 +22,11 @@ class SoundManager {
     const progressColor = compliments[complimentIndex]
 
     const light = colorIndex === 0 || colorIndex === 12
+    this.waveColor = light ? colors[13] : colors[0]
 
     this.wavesurfer = WaveSurfer.create({
       container: '#waveform',
-      waveColor: light ? colors[13] : colors[0],
+      waveColor: this.waveColor,
       progressColor,
       barWidth: 2,
       normalize: true,
@@ -41,7 +44,6 @@ class SoundManager {
     const hashDir = hashStr.substring(0, 1)
     const mp3Url = `${urlRoot}/${hashDir}/${hashStr}.mp3`
     this.wavesurfer.load(mp3Url)
-
     this.wavesurfer.on('ready', () => {
       this.isLoaded = true
     })

@@ -39,8 +39,9 @@ export const Stage = styled.div`
   height: 100%;
 `
 
-const red = css`
+const hovered = css`
   color: #f42b2e;
+  opacity: 1;
 `
 
 export const SkipIntro = styled.div`
@@ -48,6 +49,7 @@ export const SkipIntro = styled.div`
   bottom: 20px;
   right: 20px;
   cursor: pointer;
-  ${props => (props.isHover ? red : '')};
+  opacity: 0.5;
+  ${props => (props.isHover ? hovered : '')};
   transition: all 250ms;
 `
