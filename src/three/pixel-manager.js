@@ -9,6 +9,7 @@ const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
 })
 
 const PIXEL_SIZE = 10
+const MAX_PIXEL_SIZE_PX = 128
 const N_GROUPS = 3
 const MAGIC_NUMBER = 551
 
@@ -147,15 +148,25 @@ export default class PixelManager {
   // we zoom in. At all z-indexes lower than 0 (during the swing intro animation, for instance),
   // we'll want to compensate for this adjustment in order to make the faraway pixels not look so
   // small
-  updatePixelSize(size) {
+  updatePixelSize(fov, zoom) {
+    // The higher the distance offset, the smaller the pixels appear as they recede into negative z
+    const distanceOffset = 16
+    const vFOV = fov * Math.PI / 180
+    const maxPixelFraction = MAX_PIXEL_SIZE_PX / window.innerHeight
+
     for (let i = 0; i < this.pixelGroups.length; i++) {
       const pixelGroup = this.pixelGroups[i]
+      // Update the pixel geometry size based on the zoom of the camera and the distance of the
+      // pixel
+      const height =
+        2 * Math.tan(vFOV / 2) * (zoom - pixelGroup.position.z / distanceOffset)
+      const maxSize = maxPixelFraction * height
+
+      const size = Math.min(this.pixelSize, maxSize)
+
       if (size !== pixelGroup.material.uniforms.size) {
         pixelGroup.material.uniforms.size.value = size
         pixelGroup.material.uniforms.size.needsUpdate = true
-
-        pixelGroup.material.uniforms.depthCompensation.value =
-          pixelGroup.position.z < 0 ? 1 + pixelGroup.position.z / -10000 : 1
       }
     }
   }
