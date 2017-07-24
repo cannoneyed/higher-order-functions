@@ -22,7 +22,7 @@ const ZOOM = {
   // min: 2,
   min: 14,
   max: 1600,
-  point: 20,
+  point: 40,
 }
 const ANIMATION_OFFSET = 800
 const MAX_PIXEL_SIZE_PX = 128
@@ -83,33 +83,16 @@ const swingParam = { s: 1, stop: false }
 
 window.zoomParam = zoomParam
 
-let height, dist, maxPixelFraction, maxSize, size
-
-window.sample = () => {
-  console.log('🍕', {
-    height,
-    fov: camera.fov,
-    dist,
-    maxPixelFraction,
-    pixelSize: pixelManager.pixelSize,
-    maxSize,
-    size,
-  })
-}
-
-window.x = () => console.log(pixelManager)
-
 function render() {
   TWEEN.update()
 
   // Update the pixel geometry size based on the zoom of the camera
-  dist = zoomParam.z
   const vFOV = camera.fov * Math.PI / 180
-  height = 2 * Math.tan(vFOV / 2) * dist
-  maxPixelFraction = MAX_PIXEL_SIZE_PX / window.innerHeight
-  maxSize = maxPixelFraction * height
+  const height = 2 * Math.tan(vFOV / 2) * zoomParam.z
+  const maxPixelFraction = MAX_PIXEL_SIZE_PX / window.innerHeight
+  const maxSize = maxPixelFraction * height
 
-  size = Math.min(pixelManager.pixelSize, maxSize)
+  const size = Math.min(pixelManager.pixelSize, maxSize)
   pixelManager.updatePixelSize(size)
 
   if (sceneManager.isAnimationActive) {
@@ -158,23 +141,19 @@ export function click(event) {
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
 
-  let intersects = raycaster.intersectObjects(pixelManager.pixels)
+  let intersects = raycaster.intersectObjects(pixelManager.pixelGroups)
 
   if (intersects.length > 0) {
-    const intersect = intersects[0]
-
-    console.log('🍕', intersect.point)
-    return
-
-    const { index, object } = intersect
+    const { point } = intersects[0]
+    const pixel = pixelManager.getPixelFromCoordinates(point.x, point.y)
 
     // We'll want to zoom out / return when clicking a black pixel
-    if (object.colorIndex === 13) {
+    if (pixel.colorIndex === 13) {
       return zoomOut()
     }
 
-    const point = object.geometry.vertices[index]
-    zoomToPoint(point, object.colorIndex)
+    // const point = object.geometry.vertices[index]
+    zoomToPixel(pixel)
   } else {
     zoomOut()
   }
@@ -198,16 +177,14 @@ function zoomOut() {
     })
 }
 
-window.zoomToPoint = zoomToPoint
+window.zoomToPixel = zoomToPixel
 
-function zoomToPoint(point, colorIndex) {
+function zoomToPixel(pixel) {
   if (!sceneManager.isInteractive) {
     return
   }
 
-  const { x, y } = point
-  const pixel = pixelManager.getPixelFromCoordinates(x, y)
-  pixel.colorIndex = colorIndex
+  const { x, y } = pixelManager.getCoordinatesFromPixel(pixel)
 
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)

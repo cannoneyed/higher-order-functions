@@ -27,27 +27,27 @@ const vertexShader = `
     uniform vec3 color;
     varying vec3 vColor;
     void main() {
-        vec3 newPos = position;
+        vec3 pos = vec3(0.0, 0.0, 0.0);
 
         if (vertexIndex == 0.0) {
-          newPos.x = -0.5 * size + center.x;
-          newPos.y = 0.5 * size + center.y;
+          pos.x = -0.5 * size + center.x;
+          pos.y = 0.5 * size + center.y;
         }
         if (vertexIndex == 1.0) {
-          newPos.x = 0.5 * size + center.x;
-          newPos.y = 0.5 * size + center.y;
+          pos.x = 0.5 * size + center.x;
+          pos.y = 0.5 * size + center.y;
         }
         if (vertexIndex == 2.0) {
-          newPos.x = -0.5 * size + center.x;
-          newPos.y = -0.5 * size + center.y;
+          pos.x = -0.5 * size + center.x;
+          pos.y = -0.5 * size + center.y;
         }
         if (vertexIndex == 3.0) {
-          newPos.x = 0.5 * size + center.x;
-          newPos.y = -0.5 * size + center.y;
+          pos.x = 0.5 * size + center.x;
+          pos.y = -0.5 * size + center.y;
         }
 
         vColor = color;
-        vec4 mvPosition = modelViewMatrix * vec4( newPos, 1.0 );
+        vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
     }
 `
@@ -102,16 +102,6 @@ export default class PixelManager {
 
     const geometry = new THREE.PlaneGeometry(this.pixelSize, this.pixelSize)
     geometry.translate(vertex.x, vertex.y, vertex.z)
-
-    // If we're the centered on white pixel, force it into group [0, 0]
-    if (rowIndex === centerRow && colIndex === centerCol) {
-      console.log('🔥', geometry, vertex)
-    }
-
-    // If we're the centered on white pixel, force it into group [0, 0]
-    if (rowIndex === centerRow && colIndex === centerCol + 1) {
-      console.log('🔥', geometry, vertex)
-    }
 
     geometry.faces.forEach(function(face, index) {
       const vertexA = geometry.vertices[face.a]
@@ -208,13 +198,21 @@ export default class PixelManager {
   }
 
   getPixelFromCoordinates = (x, y) => {
+    const row = centerRow + Math.floor(x / this.pixelSize + 0.5)
+    const col = centerCol + Math.floor(y / this.pixelSize + 0.5)
+    const colorIndex = parseInt(data[row][col], 16)
     return {
-      row: centerRow + x / this.pixelSize,
-      col: centerCol + y / this.pixelSize,
+      row,
+      col,
+      colorIndex,
     }
   }
 
-  getPixelFromRealCoordinates = (x, y) => {}
+  getCoordinatesFromPixel = ({ row, col }) => {
+    const x = (row - centerRow) * this.pixelSize
+    const y = (col - centerCol) * this.pixelSize
+    return { x, y }
+  }
 }
 
 function getColorByIndex(colorIndex) {
