@@ -27,6 +27,7 @@
     "react-transition-group": "^2.0.2",
     "react-wavesurfer": "^0.8.3",
     "recompose": "^0.23.5",
+    "store": "^2.0.12",
     "styled-components": "^2.1.1",
     "three": "^0.86.0",
     "three-orbit-controls": "^82.1.0",

@@ -1,16 +1,37 @@
 import { observable } from 'mobx'
+import store from 'store'
 
+import * as scene from 'three/scene'
 import soundManager from 'core/sound'
 
 class SceneManager {
+  @observable hasViewedIntro = false
+
   @observable isZoomedIn = false
   @observable isInteractive = false
-  @observable isAnimationActive = false
-  @observable isAnimationFinished = false
+  @observable isIntroAnimationActive = false
+  @observable isIntroAnimationFinished = false
+
+  INTRO_ANIMATION_TIME = 30000
+  INTRO_ANIMATION_OFFSET = 800
 
   @observable selectedPixel = null
-
   @observable tileSize = 128
+
+  constructor() {
+    this.hasViewedIntro = !!store.get('hasViewedIntro')
+  }
+
+  activateIntroAnimation = (skip = false) => {
+    if (skip) {
+      this.INTRO_ANIMATION_TIME = 4000
+      this.INTRO_ANIMATION_OFFSET = 1600
+      console.log('skip', skip)
+    }
+
+    this.isIntroAnimationActive = true
+    scene.activateIntroAnimation()
+  }
 
   selectPixel = ({ row, col, colorIndex }) => {
     this.selectedPixel = { row, col, colorIndex }
@@ -30,6 +51,17 @@ class SceneManager {
     setTimeout(() => {
       soundManager.unloadSound()
     }, soundManager.loadDelay)
+  }
+
+  finishIntroAnimation = () => {
+    this.isIntroAnimationActive = false
+    this.isIntroAnimationFinished = true
+    this.setHasViewedIntro()
+  }
+
+  setHasViewedIntro = () => {
+    store.set('hasViewedIntro', true)
+    this.hasViewedIntro = true
   }
 }
 

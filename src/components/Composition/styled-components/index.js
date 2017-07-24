@@ -28,9 +28,7 @@ export const ActivateButton = styled.div`
 
   ${props => (props.isActive ? active : '')};
 
-  &:hover {
-    ${props => (props.isActive ? '' : hover)};
-  }
+  ${props => (props.isHover && !props.isActive ? hover : '')};
 
   transition: all ${props => (props.isActive ? 1200 : 250)}ms
     cubic-bezier(0.000, 1.020, 0.510, 0.950);
@@ -39,4 +37,17 @@ export const ActivateButton = styled.div`
 export const Stage = styled.div`
   width: 100%;
   height: 100%;
+`
+
+const red = css`
+  color: #f42b2e;
+`
+
+export const SkipIntro = styled.div`
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  cursor: pointer;
+  ${props => (props.isHover ? red : '')};
+  transition: all 250ms;
 `

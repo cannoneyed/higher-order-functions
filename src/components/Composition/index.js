@@ -8,7 +8,12 @@ import sceneManager from 'core/scene'
 import Title from 'components/Title'
 import SoundPlayer from 'components/SoundPlayer'
 
-import { ActivateButton, Stage, StageWrapper } from './styled-components'
+import {
+  ActivateButton,
+  Stage,
+  StageWrapper,
+  SkipIntro,
+} from './styled-components'
 
 @observer
 export default class Composition extends Component {
@@ -17,34 +22,45 @@ export default class Composition extends Component {
     isActive: t.bool,
   }
 
+  state = {
+    isHover: false,
+  }
+
   componentDidMount() {
     const container = ReactDOM.findDOMNode(this.stage)
     scene.init(container)
   }
 
-  activate = () => {
-    const { isAnimationActive } = sceneManager
-    if (isAnimationActive) {
+  activate = ({ skip } = {}) => {
+    const { isIntroAnimationActive } = sceneManager
+    if (isIntroAnimationActive) {
       return
     }
 
-    sceneManager.isAnimationActive = true
+    sceneManager.isIntroAnimationActive = true
+    sceneManager.activateIntroAnimation(skip)
+  }
 
-    scene.activate()
+  setHover = isHover => {
+    this.setState({ isHover })
   }
 
   render() {
     const {
-      isAnimationActive,
-      isAnimationFinished,
+      hasViewedIntro,
+      isIntroAnimationActive,
+      isIntroAnimationFinished,
       isInteractive,
       tileSize,
     } = sceneManager
 
     let showActivateButton = !isInteractive
-    if (isAnimationFinished) {
+    if (isIntroAnimationFinished) {
       showActivateButton = false
     }
+
+    const showSkipButton =
+      hasViewedIntro && !isIntroAnimationFinished && !isIntroAnimationActive
 
     return (
       <StageWrapper>
@@ -53,8 +69,20 @@ export default class Composition extends Component {
           <ActivateButton
             onClick={this.activate}
             size={tileSize}
-            isActive={isAnimationActive}
+            isActive={isIntroAnimationActive}
+            isHover={this.state.isHover}
+            onMouseEnter={() => this.setHover(true)}
+            onMouseLeave={() => this.setHover(false)}
           />}
+        {showSkipButton &&
+          <SkipIntro
+            onClick={() => this.activate({ skip: true })}
+            isHover={this.state.isHover}
+            onMouseEnter={() => this.setHover(true)}
+            onMouseLeave={() => this.setHover(false)}
+          >
+            skip intro
+          </SkipIntro>}
         <SoundPlayer />
         <Title />
       </StageWrapper>

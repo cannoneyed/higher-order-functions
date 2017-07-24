@@ -11,9 +11,6 @@ const ZOOM = {
   point: 30,
 }
 
-const ANIMATION_OFFSET = 800
-
-const ANIMATION_TIME = 30000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -69,11 +66,11 @@ function render() {
 
   pixelManager.updatePixelSize(camera.fov, zoomParam.z)
 
-  if (sceneManager.isAnimationActive) {
+  if (sceneManager.isIntroAnimationActive) {
     const now = Date.now()
     const elapsed = now - start
 
-    let time = (elapsed + ANIMATION_OFFSET) * timeParam.t
+    let time = (elapsed + sceneManager.INTRO_ANIMATION_OFFSET) * timeParam.t
 
     const pixelGroups = pixelManager.pixelGroups
     for (let i = 0; i < pixelGroups.length; i++) {
@@ -84,14 +81,16 @@ function render() {
 
     // Add in a quick override of the swing tween, since it ought to
     // stop at approximately 80% of the animation time
-    if (elapsed > ANIMATION_TIME * 0.85 && !swingParam.stop) {
+    if (
+      elapsed > sceneManager.INTRO_ANIMATION_TIME * 0.85 &&
+      !swingParam.stop
+    ) {
       swingParam.stop = true
       sceneManager.isInteractive = true
     }
 
-    if (elapsed >= ANIMATION_TIME) {
-      sceneManager.isAnimationActive = false
-      sceneManager.isAnimationFinished = true
+    if (elapsed >= sceneManager.INTRO_ANIMATION_TIME) {
+      sceneManager.finishIntroAnimation()
     }
   }
 
@@ -173,22 +172,22 @@ function zoomToPixel(pixel) {
     })
 }
 
-export function activate() {
-  sceneManager.isAnimationActive = true
+export function activateIntroAnimation() {
+  sceneManager.isIntroAnimationActive = true
   start = Date.now()
 
   new TWEEN.Tween(zoomParam)
-    .to({ z: ZOOM.max }, ANIMATION_TIME * 0.95)
+    .to({ z: ZOOM.max }, sceneManager.INTRO_ANIMATION_TIME * 0.95)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 
   new TWEEN.Tween(timeParam)
-    .to({ t: timeParam.t * 1.5 }, ANIMATION_TIME)
+    .to({ t: timeParam.t * 1.5 }, sceneManager.INTRO_ANIMATION_TIME)
     .easing(TWEEN.Easing.Quadratic.In)
     .start()
 
   new TWEEN.Tween(swingParam)
-    .to({ s: 0 }, ANIMATION_TIME)
+    .to({ s: 0 }, sceneManager.INTRO_ANIMATION_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 }
