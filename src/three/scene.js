@@ -1,21 +1,17 @@
 import * as THREE from 'three'
 import TWEEN from 'tween.js'
-// import MakeOrbitControls from 'three-orbit-controls'
-// const OrbitControls = MakeOrbitControls(THREE)
 
-import particleManager from './particle-manager'
+import PixelManager from './pixel-manager'
 import sceneManager from 'core/scene'
 import hash, { getPixelFromHash } from 'utils/hash'
 
 // Constants
 const ZOOM = {
-  min: 2,
-  max: 800,
-  point: 20,
+  min: 10,
+  max: 1450,
+  point: 30,
 }
-const ANIMATION_OFFSET = 800
 
-const ANIMATION_TIME = 30000
 const ZOOM_TIME = 3000
 const SWING = 500
 
@@ -24,7 +20,7 @@ const tweens = {
 }
 
 // Closure variables
-let camera, scene, renderer, raycaster
+let camera, scene, renderer, raycaster, pixelManager
 
 export function animate() {
   requestAnimationFrame(animate)
@@ -44,11 +40,18 @@ export function init(container, initialHash) {
   raycaster = new THREE.Raycaster()
   scene = new THREE.Scene()
 
-  particleManager.addParticlesToScene(scene)
-
   renderer = new THREE.WebGLRenderer()
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
+
+  pixelManager = new PixelManager(renderer)
+  pixelManager.addPixelsToScene(scene)
+
+  const ratio = window.innerWidth / window.innerHeight
+  camera = new THREE.PerspectiveCamera(45, ratio, 1, 30000)
+
+  camera.position.z = ZOOM.min
+
   container.appendChild(renderer.domElement)
 
   window.addEventListener('resize', onWindowResize, false)
@@ -77,32 +80,38 @@ const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
 const timeParam = { t: 0.00004 }
 const swingParam = { s: 1, stop: false }
 
+window.zoomParam = zoomParam
+
 function render() {
   TWEEN.update()
 
-  if (sceneManager.isAnimationActive) {
+  pixelManager.updatePixelSize(camera.fov, zoomParam.z)
+
+  if (sceneManager.isIntroAnimationActive) {
     const now = Date.now()
     const elapsed = now - start
 
-    let time = (elapsed + ANIMATION_OFFSET) * timeParam.t
+    let time = (elapsed + sceneManager.INTRO_ANIMATION_OFFSET) * timeParam.t
 
-    const particles = particleManager.particles
-    for (let i = 0; i < particles.length; i++) {
-      const object = particles[i]
+    const pixelGroups = pixelManager.pixelGroups
+    for (let i = 0; i < pixelGroups.length; i++) {
+      const pixelGroup = pixelGroups[i]
       const s = swingParam.stop ? 0 : swingParam.s
-      object.position.z = Math.sin(time * i) * SWING * s
+      pixelGroup.position.z = Math.sin(time * i) * SWING * s
     }
 
     // Add in a quick override of the swing tween, since it ought to
     // stop at approximately 80% of the animation time
-    if (elapsed > ANIMATION_TIME * 0.85 && !swingParam.stop) {
+    if (
+      elapsed > sceneManager.INTRO_ANIMATION_TIME * 0.85 &&
+      !swingParam.stop
+    ) {
       swingParam.stop = true
       sceneManager.isInteractive = true
     }
 
-    if (elapsed >= ANIMATION_TIME) {
-      sceneManager.isAnimationActive = false
-      sceneManager.isAnimationFinished = true
+    if (elapsed >= sceneManager.INTRO_ANIMATION_TIME) {
+      sceneManager.finishIntroAnimation()
     }
   }
 
@@ -126,26 +135,26 @@ export function click(event, router) {
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
 
-  let intersects = raycaster.intersectObjects(particleManager.particles)
+  let intersects = raycaster.intersectObjects(pixelManager.pixelGroups)
 
   if (!sceneManager.isInteractive) {
     return
   }
 
   if (intersects.length > 0) {
-    const intersect = intersects[0]
-    const { index, object } = intersect
+    const { point } = intersects[0]
+    const pixel = pixelManager.getPixelFromCoordinates(point.x, point.y)
 
     // We'll want to zoom out / return when clicking a black pixel
-    if (object.colorIndex === 13) {
-      router.navigate('default')
+    if (pixel.colorIndex === 13) {
+      return zoomOut()
     }
 
-    const point = object.geometry.vertices[index]
-    const { x, y } = point
-    const pixel = particleManager.getPixelFromCoordinates(x, y)
     const hashStr = hash(pixel)
     router.navigate('hash', { hash: hashStr })
+
+    // const point = object.geometry.vertices[index]
+    zoomToPixel(pixel)
   } else {
     router.navigate('default')
   }
@@ -166,17 +175,18 @@ export function zoomOut() {
     .onComplete(() => {
       sceneManager.isInteractive = true
       sceneManager.isZoomedIn = false
+      pixelManager.updateBufferGeometry()
     })
 }
 
 function zoomToInitialPixel(pixel, colorIndex) {
   sceneManager.selectPixel(pixel)
-  const point = particleManager.getPointFromPixel(pixel)
+  const { x, y } = pixelManager.getCoordinatesFromPixel(pixel)
 
   sceneManager.isInteractive = true
   sceneManager.isZoomedIn = true
-  zoomParam.x = point.x
-  zoomParam.y = point.y
+  zoomParam.x = x
+  zoomParam.y = y
   zoomParam.z = ZOOM.point
 }
 
@@ -185,7 +195,7 @@ export function zoomToPixel(pixel) {
     tweens.zoom.stop()
   }
 
-  const { x, y } = particleManager.getPointFromPixel(pixel)
+  const { x, y } = pixelManager.getCoordinatesFromPixel(pixel)
 
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)
@@ -197,25 +207,26 @@ export function zoomToPixel(pixel) {
     .onComplete(() => {
       sceneManager.isInteractive = true
       sceneManager.isZoomedIn = true
+      pixelManager.updateBufferGeometry()
     })
 }
 
-export function activate() {
-  sceneManager.isAnimationActive = true
+export function activateIntroAnimation() {
+  sceneManager.isIntroAnimationActive = true
   start = Date.now()
 
   tweens.zoom = new TWEEN.Tween(zoomParam)
-    .to({ z: ZOOM.max }, ANIMATION_TIME * 0.95)
+    .to({ z: ZOOM.max }, sceneManager.INTRO_ANIMATION_TIME * 0.95)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 
   tweens.time = new TWEEN.Tween(timeParam)
-    .to({ t: timeParam.t * 1.5 }, ANIMATION_TIME)
+    .to({ t: timeParam.t * 1.5 }, sceneManager.INTRO_ANIMATION_TIME)
     .easing(TWEEN.Easing.Quadratic.In)
     .start()
 
   tweens.swing = new TWEEN.Tween(swingParam)
-    .to({ s: 0 }, ANIMATION_TIME)
+    .to({ s: 0 }, sceneManager.INTRO_ANIMATION_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
 }

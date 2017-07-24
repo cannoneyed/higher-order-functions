@@ -10,11 +10,21 @@ import sceneManager from 'core/scene'
 import Title from 'components/Title'
 import SoundPlayer from 'components/SoundPlayer'
 
-import { ActivateButton, Stage, StageWrapper } from './styled-components'
+import {
+  ActivateButton,
+  Stage,
+  StageWrapper,
+  SkipIntro,
+} from './styled-components'
 
 @withRoute
 @observer
 export default class Composition extends Component {
+  state = {
+    isPixelHovered: false,
+    isSkipHovered: false,
+  }
+
   componentDidMount() {
     const { route } = this.props
     const initialHash = route.name === 'hash' ? route.params.hash : null
@@ -34,14 +44,13 @@ export default class Composition extends Component {
     }
   }
 
-  activate = () => {
-    const { isAnimationActive } = sceneManager
-    if (isAnimationActive) {
+  activate = ({ skip } = {}) => {
+    const { isIntroAnimationActive } = sceneManager
+    if (isIntroAnimationActive) {
       return
     }
 
-    sceneManager.isAnimationActive = true
-    scene.activate()
+    sceneManager.activateIntroAnimation(skip)
   }
 
   handleStageClick = event => {
@@ -51,16 +60,22 @@ export default class Composition extends Component {
 
   render() {
     const {
-      isAnimationActive,
-      isAnimationFinished,
+      hasViewedIntro,
+      isIntroAnimationActive,
+      isIntroAnimationFinished,
       isInteractive,
       tileSize,
     } = sceneManager
 
     let showActivateButton = !isInteractive
-    if (isAnimationFinished) {
+    if (isIntroAnimationFinished) {
       showActivateButton = false
     }
+
+    const showSkipButton =
+      hasViewedIntro && !isIntroAnimationFinished && !isIntroAnimationActive
+
+    const isPixelHovered = this.state.isPixelHovered || this.state.isSkipHovered
 
     return (
       <StageWrapper>
@@ -72,8 +87,20 @@ export default class Composition extends Component {
           <ActivateButton
             onClick={this.activate}
             size={tileSize}
-            isActive={isAnimationActive}
+            isActive={isIntroAnimationActive}
+            isHover={isPixelHovered}
+            onMouseEnter={() => this.setState({ isPixelHovered: true })}
+            onMouseLeave={() => this.setState({ isPixelHovered: false })}
           />}
+        {showSkipButton &&
+          <SkipIntro
+            onClick={() => this.activate({ skip: true })}
+            isHover={this.state.isSkipHovered}
+            onMouseEnter={() => this.setState({ isSkipHovered: true })}
+            onMouseLeave={() => this.setState({ isSkipHovered: false })}
+          >
+            skip intro
+          </SkipIntro>}
         <SoundPlayer />
         <Title />
       </StageWrapper>
