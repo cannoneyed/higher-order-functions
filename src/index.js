@@ -17,7 +17,7 @@ injectGlobal`
   }
 `
 
-const router = createRouter(true)
+const router = createRouter()
 
 const Page = (
   <RouterProvider router={router}>
