@@ -23,6 +23,7 @@ export default class Composition extends Component {
   state = {
     isPixelHovered: false,
     isSkipHovered: false,
+    initialHash: null,
   }
 
   componentDidMount() {
@@ -30,6 +31,8 @@ export default class Composition extends Component {
     const initialHash = route.name === 'hash' ? route.params.hash : null
     const container = ReactDOM.findDOMNode(this.stage)
     scene.init(container, initialHash)
+
+    this.setState({ initialHash }) // eslint-disable-line react/no-did-mount-set-state
   }
 
   componentWillReceiveProps(nextProps) {
@@ -73,7 +76,10 @@ export default class Composition extends Component {
     }
 
     const showSkipButton =
-      hasViewedIntro && !isIntroAnimationFinished && !isIntroAnimationActive
+      hasViewedIntro &&
+      !isIntroAnimationFinished &&
+      !isIntroAnimationActive &&
+      !this.state.initialHash
 
     const isPixelHovered = this.state.isPixelHovered || this.state.isSkipHovered
 
