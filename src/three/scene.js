@@ -19,11 +19,13 @@ import sceneManager from 'core/scene'
 
 // Constants
 const ZOOM = {
-  min: 2,
-  max: 800,
+  // min: 2,
+  min: 14,
+  max: 1600,
   point: 20,
 }
 const ANIMATION_OFFSET = 800
+const MAX_PIXEL_SIZE_PX = 128
 
 const ANIMATION_TIME = 3000
 const ZOOM_TIME = 3000
@@ -40,7 +42,7 @@ export function animate() {
 
 export function init(container) {
   camera = new THREE.PerspectiveCamera(
-    75,
+    45,
     window.innerWidth / window.innerHeight,
     1,
     30000,
@@ -81,8 +83,34 @@ const swingParam = { s: 1, stop: false }
 
 window.zoomParam = zoomParam
 
+let height, dist, maxPixelFraction, maxSize, size
+
+window.sample = () => {
+  console.log('🍕', {
+    height,
+    fov: camera.fov,
+    dist,
+    maxPixelFraction,
+    pixelSize: pixelManager.pixelSize,
+    maxSize,
+    size,
+  })
+}
+
+window.x = () => console.log(pixelManager)
+
 function render() {
   TWEEN.update()
+
+  // Update the pixel geometry size based on the zoom of the camera
+  dist = zoomParam.z
+  const vFOV = camera.fov * Math.PI / 180
+  height = 2 * Math.tan(vFOV / 2) * dist
+  maxPixelFraction = MAX_PIXEL_SIZE_PX / window.innerHeight
+  maxSize = maxPixelFraction * height
+
+  size = Math.min(pixelManager.pixelSize, maxSize)
+  pixelManager.updatePixelSize(size)
 
   if (sceneManager.isAnimationActive) {
     const now = Date.now()

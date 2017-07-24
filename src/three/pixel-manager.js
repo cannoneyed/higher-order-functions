@@ -9,7 +9,6 @@ const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
 
 const N_GROUPS = 3
 const MAGIC_NUMBER = 551
-let PIXEL_SIZE = 10
 
 const centerRow = 132
 const centerCol = 76
@@ -22,12 +21,33 @@ const fragmentShader = `
 `
 
 const vertexShader = `
-    attribute float size;
+    attribute float vertexIndex;
+    attribute vec3 center;
+    uniform float size;
     uniform vec3 color;
     varying vec3 vColor;
     void main() {
+        vec3 newPos = position;
+
+        if (vertexIndex == 0.0) {
+          newPos.x = -0.5 * size + center.x;
+          newPos.y = 0.5 * size + center.y;
+        }
+        if (vertexIndex == 1.0) {
+          newPos.x = 0.5 * size + center.x;
+          newPos.y = 0.5 * size + center.y;
+        }
+        if (vertexIndex == 2.0) {
+          newPos.x = -0.5 * size + center.x;
+          newPos.y = -0.5 * size + center.y;
+        }
+        if (vertexIndex == 3.0) {
+          newPos.x = 0.5 * size + center.x;
+          newPos.y = -0.5 * size + center.y;
+        }
+
         vColor = color;
-        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        vec4 mvPosition = modelViewMatrix * vec4( newPos, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
     }
 `
@@ -51,21 +71,17 @@ export default class PixelManager {
       return _.range(getNGroups(colorIndex)).map(() => ({
         geometry: new THREE.BufferGeometry(),
         positions: [],
-        colors: [],
-        normals: [],
+        centers: [],
+        indices: [],
       }))
     })
 
     this.pixelGroups = []
     this.renderer = renderer
-    this.initializeRenderer()
+    this.pixelSize = 2 * this.renderer.getSize().height / data.length
 
     this.addColorVertices()
     this.createBufferGeometries()
-  }
-
-  initializeRenderer = () => {
-    PIXEL_SIZE = 2 * this.renderer.getSize().height / data.length
   }
 
   getBufferGeometry(colorIndex, groupIndex) {
@@ -84,19 +100,36 @@ export default class PixelManager {
       bufferGeometry = this.getBufferGeometry(0, 0)
     }
 
-    const geometry = new THREE.PlaneGeometry(PIXEL_SIZE, PIXEL_SIZE)
+    const geometry = new THREE.PlaneGeometry(this.pixelSize, this.pixelSize)
     geometry.translate(vertex.x, vertex.y, vertex.z)
 
+    // If we're the centered on white pixel, force it into group [0, 0]
+    if (rowIndex === centerRow && colIndex === centerCol) {
+      console.log('🔥', geometry, vertex)
+    }
+
+    // If we're the centered on white pixel, force it into group [0, 0]
+    if (rowIndex === centerRow && colIndex === centerCol + 1) {
+      console.log('🔥', geometry, vertex)
+    }
+
     geometry.faces.forEach(function(face, index) {
-      bufferGeometry.positions.push(geometry.vertices[face.a].x)
-      bufferGeometry.positions.push(geometry.vertices[face.a].y)
-      bufferGeometry.positions.push(geometry.vertices[face.a].z)
-      bufferGeometry.positions.push(geometry.vertices[face.b].x)
-      bufferGeometry.positions.push(geometry.vertices[face.b].y)
-      bufferGeometry.positions.push(geometry.vertices[face.b].z)
-      bufferGeometry.positions.push(geometry.vertices[face.c].x)
-      bufferGeometry.positions.push(geometry.vertices[face.c].y)
-      bufferGeometry.positions.push(geometry.vertices[face.c].z)
+      const vertexA = geometry.vertices[face.a]
+      const vertexB = geometry.vertices[face.b]
+      const vertexC = geometry.vertices[face.c]
+      bufferGeometry.positions.push(vertexA.x, vertexA.y, vertexA.z)
+      bufferGeometry.positions.push(vertexB.x, vertexB.y, vertexB.z)
+      bufferGeometry.positions.push(vertexC.x, vertexC.y, vertexC.z)
+
+      // Add the center position to the buffers corresponding to each vertex of the triangle
+      bufferGeometry.centers.push(vertex.x, vertex.y, vertex.z)
+      bufferGeometry.centers.push(vertex.x, vertex.y, vertex.z)
+      bufferGeometry.centers.push(vertex.x, vertex.y, vertex.z)
+
+      // And add the vertex index to track which vertex we're processing in the shader
+      bufferGeometry.indices.push(face.a)
+      bufferGeometry.indices.push(face.b)
+      bufferGeometry.indices.push(face.c)
     })
   }
 
@@ -105,8 +138,8 @@ export default class PixelManager {
     const nCols = data[0].length
 
     // Adjust our center to display the target white pixel as the center
-    const offsetRow = nRows * PIXEL_SIZE / 2 - 0.5 * PIXEL_SIZE
-    const offSetCol = nCols * PIXEL_SIZE / 2 + 7 * PIXEL_SIZE
+    const offsetRow = nRows * this.pixelSize / 2 - 0.5 * this.pixelSize
+    const offSetCol = nCols * this.pixelSize / 2 + 7 * this.pixelSize
 
     for (let rowIndex = 0; rowIndex < nRows; rowIndex++) {
       const row = data[rowIndex]
@@ -115,8 +148,8 @@ export default class PixelManager {
         const colorIndex = parseInt(digit, 16)
 
         const vertex = {
-          x: rowIndex * PIXEL_SIZE - offsetRow,
-          y: colIndex * PIXEL_SIZE - offSetCol,
+          x: rowIndex * this.pixelSize - offsetRow,
+          y: colIndex * this.pixelSize - offSetCol,
           z: 0,
         }
 
@@ -128,15 +161,20 @@ export default class PixelManager {
   createBufferGeometries = () => {
     _.map(this.bufferGeometries, (bufferGeometryGroup, colorIndex) => {
       _.map(bufferGeometryGroup, bufferGeometry => {
-        const { geometry, positions, colors, normals } = bufferGeometry
+        const { geometry, positions, centers, indices } = bufferGeometry
 
         const bufferPositions = new THREE.Float32BufferAttribute(positions, 3)
+        const bufferCenters = new THREE.Float32BufferAttribute(centers, 3)
+        const bufferIndices = new THREE.Uint16BufferAttribute(indices, 1)
         geometry.addAttribute('position', bufferPositions)
+        geometry.addAttribute('center', bufferCenters)
+        geometry.addAttribute('vertexIndex', bufferIndices)
 
         const color = getColorByIndex(colorIndex)
 
         const uniforms = {
           color: { value: color },
+          size: { value: this.pixelSize, type: 'f' },
         }
 
         const material = new THREE.ShaderMaterial({
@@ -153,6 +191,16 @@ export default class PixelManager {
     })
   }
 
+  updatePixelSize(size) {
+    for (let i = 0; i < this.pixelGroups.length; i++) {
+      const pixelGroup = this.pixelGroups[i]
+      if (size !== pixelGroup.material.uniforms.size) {
+        pixelGroup.material.uniforms.size.value = size
+        pixelGroup.material.uniforms.size.needsUpdate = true
+      }
+    }
+  }
+
   addPixelsToScene = scene => {
     for (let i = 0; i < this.pixelGroups.length; i++) {
       scene.add(this.pixelGroups[i])
@@ -161,8 +209,8 @@ export default class PixelManager {
 
   getPixelFromCoordinates = (x, y) => {
     return {
-      row: centerRow + x / PIXEL_SIZE,
-      col: centerCol + y / PIXEL_SIZE,
+      row: centerRow + x / this.pixelSize,
+      col: centerCol + y / this.pixelSize,
     }
   }
 
