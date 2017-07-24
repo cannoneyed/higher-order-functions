@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import _ from 'lodash'
 import colorMap from 'constants/colors'
 import data from 'data/data.json'
+import { fragmentShader, vertexShader } from './shaders'
 
 const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
   return new THREE.Color(getHexColorByIndex(colorIndex))
@@ -12,45 +13,6 @@ const MAGIC_NUMBER = 551
 
 const centerRow = 132
 const centerCol = 76
-
-const fragmentShader = `
-    varying vec3 vColor;
-    void main() {
-        gl_FragColor = vec4( vColor, 1.0 );
-    }
-`
-
-const vertexShader = `
-    attribute float vertexIndex;
-    attribute vec3 center;
-    uniform float size;
-    uniform vec3 color;
-    varying vec3 vColor;
-    void main() {
-        vec3 pos = vec3(0.0, 0.0, 0.0);
-
-        if (vertexIndex == 0.0) {
-          pos.x = -0.5 * size + center.x;
-          pos.y = 0.5 * size + center.y;
-        }
-        if (vertexIndex == 1.0) {
-          pos.x = 0.5 * size + center.x;
-          pos.y = 0.5 * size + center.y;
-        }
-        if (vertexIndex == 2.0) {
-          pos.x = -0.5 * size + center.x;
-          pos.y = -0.5 * size + center.y;
-        }
-        if (vertexIndex == 3.0) {
-          pos.x = 0.5 * size + center.x;
-          pos.y = -0.5 * size + center.y;
-        }
-
-        vColor = color;
-        vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
-        gl_Position = projectionMatrix * mvPosition;
-    }
-`
 
 // Make more groups for white (colorIndex === 0)
 const getNGroups = colorIndex =>
@@ -165,6 +127,7 @@ export default class PixelManager {
         const uniforms = {
           color: { value: color },
           size: { value: this.pixelSize, type: 'f' },
+          depthCompensation: { value: 1.0, type: 'f' },
         }
 
         const material = new THREE.ShaderMaterial({
@@ -179,12 +142,19 @@ export default class PixelManager {
     })
   }
 
+  // We need to update the pixel size so that it's constrained to a maximum pixel size the further
+  // we zoom in. At all z-indexes lower than 0 (during the swing intro animation, for instance),
+  // we'll want to compensate for this adjustment in order to make the faraway pixels not look so
+  // small
   updatePixelSize(size) {
     for (let i = 0; i < this.pixelGroups.length; i++) {
       const pixelGroup = this.pixelGroups[i]
       if (size !== pixelGroup.material.uniforms.size) {
         pixelGroup.material.uniforms.size.value = size
         pixelGroup.material.uniforms.size.needsUpdate = true
+
+        pixelGroup.material.uniforms.depthCompensation.value =
+          pixelGroup.position.z < 0 ? 1 + pixelGroup.position.z / -10000 : 1
       }
     }
   }

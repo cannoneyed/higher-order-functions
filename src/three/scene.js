@@ -178,8 +178,6 @@ function zoomOut() {
     })
 }
 
-window.zoomToPixel = zoomToPixel
-
 function zoomToPixel(pixel) {
   if (!sceneManager.isInteractive) {
     return
