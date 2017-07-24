@@ -1,29 +1,16 @@
 import * as THREE from 'three'
 import TWEEN from 'tween.js'
-// import MakeOrbitControls from 'three-orbit-controls'
-// const OrbitControls = MakeOrbitControls(THREE)
-
-import Stats from 'stats-js'
-
-let stats = new Stats()
-stats.setMode(0) // 0: fps, 1: ms
-// Align top-left
-stats.domElement.style.position = 'absolute'
-stats.domElement.style.left = '0px'
-stats.domElement.style.top = '0px'
-
-document.body.appendChild(stats.domElement)
 
 import PixelManager from './pixel-manager'
 import sceneManager from 'core/scene'
 
 // Constants
 const ZOOM = {
-  // min: 2,
-  min: 14,
-  max: 1600,
-  point: 40,
+  min: 2,
+  max: 1500,
+  point: 30,
 }
+
 const ANIMATION_OFFSET = 800
 const MAX_PIXEL_SIZE_PX = 128
 
@@ -37,19 +24,9 @@ let camera, scene, renderer, raycaster, pixelManager
 export function animate() {
   requestAnimationFrame(animate)
   render()
-  stats.update()
 }
 
 export function init(container) {
-  camera = new THREE.PerspectiveCamera(
-    45,
-    window.innerWidth / window.innerHeight,
-    1,
-    30000,
-  )
-  camera.position.z = ZOOM.min
-  // controls = new OrbitControls(camera)
-
   raycaster = new THREE.Raycaster()
   scene = new THREE.Scene()
 
@@ -59,6 +36,15 @@ export function init(container) {
 
   pixelManager = new PixelManager(renderer)
   pixelManager.addPixelsToScene(scene)
+
+  camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    1,
+    30000,
+  )
+
+  camera.position.z = ZOOM.min
 
   container.appendChild(renderer.domElement)
 

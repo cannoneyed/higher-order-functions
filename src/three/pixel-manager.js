@@ -8,6 +8,7 @@ const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
   return new THREE.Color(getHexColorByIndex(colorIndex))
 })
 
+const PIXEL_SIZE = 10
 const N_GROUPS = 3
 const MAGIC_NUMBER = 551
 
@@ -40,7 +41,7 @@ export default class PixelManager {
 
     this.pixelGroups = []
     this.renderer = renderer
-    this.pixelSize = 2 * this.renderer.getSize().height / data.length
+    this.pixelSize = PIXEL_SIZE
 
     this.addColorVertices()
     this.createBufferGeometries()
