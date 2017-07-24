@@ -28,14 +28,10 @@ export function animate() {
 }
 
 export function init(container, initialHash) {
-  camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    1,
-    30000,
-  )
+  const ratio = window.innerWidth / window.innerHeight
+  camera = new THREE.PerspectiveCamera(45, ratio, 1, 30000)
+
   camera.position.z = ZOOM.min
-  // controls = new OrbitControls(camera)
 
   raycaster = new THREE.Raycaster()
   scene = new THREE.Scene()
@@ -44,13 +40,10 @@ export function init(container, initialHash) {
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
 
-  pixelManager = new PixelManager(renderer)
+  pixelManager = new PixelManager(renderer, camera)
   pixelManager.addPixelsToScene(scene)
 
-  const ratio = window.innerWidth / window.innerHeight
-  camera = new THREE.PerspectiveCamera(45, ratio, 1, 30000)
-
-  camera.position.z = ZOOM.min
+  window.fuckYou = () => pixelManager
 
   container.appendChild(renderer.domElement)
 
@@ -85,7 +78,7 @@ window.zoomParam = zoomParam
 function render() {
   TWEEN.update()
 
-  pixelManager.updatePixelSize(camera.fov, zoomParam.z)
+  pixelManager.updatePixelSize()
 
   if (sceneManager.isIntroAnimationActive) {
     const now = Date.now()
@@ -131,7 +124,6 @@ export function click(event, router) {
   mouse.x = event.clientX / window.innerWidth * 2 - 1
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
 
-  raycaster.params.Points.threshold = sceneManager.isZoomedIn ? 2 : 6
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
 
@@ -180,14 +172,16 @@ export function zoomOut() {
 }
 
 function zoomToInitialPixel(pixel, colorIndex) {
-  sceneManager.selectPixel(pixel)
   const { x, y } = pixelManager.getCoordinatesFromPixel(pixel)
 
+  sceneManager.selectPixel(pixel)
   sceneManager.isInteractive = true
   sceneManager.isZoomedIn = true
+
   zoomParam.x = x
   zoomParam.y = y
   zoomParam.z = ZOOM.point
+  pixelManager.updateBufferGeometry()
 }
 
 export function zoomToPixel(pixel) {

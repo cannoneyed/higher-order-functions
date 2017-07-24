@@ -21,7 +21,7 @@ const getNGroups = colorIndex =>
   colorIndex * 1 === 0 ? N_GROUPS * 3 : N_GROUPS
 
 export default class PixelManager {
-  constructor(renderer) {
+  constructor(renderer, camera) {
     const countsByColor = {}
     _.map(data, (row, rowIndex) => {
       _.map(row, (color, colIndex) => {
@@ -42,6 +42,7 @@ export default class PixelManager {
 
     this.pixelGroups = []
     this.renderer = renderer
+    this.camera = camera
     this.pixelSize = PIXEL_SIZE
 
     this.addColorVertices()
@@ -144,25 +145,34 @@ export default class PixelManager {
     })
   }
 
-  // We need to update the pixel size so that it's constrained to a maximum pixel size the further
-  // we zoom in. At all z-indexes lower than 0 (during the swing intro animation, for instance),
-  // we'll want to compensate for this adjustment in order to make the faraway pixels not look so
-  // small
-  updatePixelSize(fov, zoom) {
+  getSize(pixelGroupIndex) {
+    const fov = this.camera.fov
+    const zoom = this.camera.position.z
     // The higher the distance offset, the smaller the pixels appear as they recede into negative z
     const distanceOffset = 16
     const vFOV = fov * Math.PI / 180
     const maxPixelFraction = MAX_PIXEL_SIZE_PX / window.innerHeight
 
+    const pixelGroup = this.pixelGroups[pixelGroupIndex]
+
+    // Update the pixel geometry size based on the zoom of the camera and the distance of the
+    // pixel
+    const height =
+      2 * Math.tan(vFOV / 2) * (zoom - pixelGroup.position.z / distanceOffset)
+    const maxSize = maxPixelFraction * height
+
+    const size = Math.min(this.pixelSize, maxSize)
+    return size
+  }
+
+  // We need to update the pixel size so that it's constrained to a maximum pixel size the further
+  // we zoom in. At all z-indexes lower than 0 (during the swing intro animation, for instance),
+  // we'll want to compensate for this adjustment in order to make the faraway pixels not look so
+  // small
+  updatePixelSize() {
     for (let i = 0; i < this.pixelGroups.length; i++) {
       const pixelGroup = this.pixelGroups[i]
-      // Update the pixel geometry size based on the zoom of the camera and the distance of the
-      // pixel
-      const height =
-        2 * Math.tan(vFOV / 2) * (zoom - pixelGroup.position.z / distanceOffset)
-      const maxSize = maxPixelFraction * height
-
-      const size = Math.min(this.pixelSize, maxSize)
+      const size = this.getSize(i)
 
       if (size !== pixelGroup.material.uniforms.size) {
         pixelGroup.material.uniforms.size.value = size
@@ -179,7 +189,8 @@ export default class PixelManager {
   updateBufferGeometry() {
     for (let i = 0; i < this.pixelGroups.length; i++) {
       const pixelGroup = this.pixelGroups[i]
-      const size = pixelGroup.material.uniforms.size.value
+      const size = this.getSize(i)
+
       const positionBufferArray = pixelGroup.geometry.attributes.position.array
       const centerBufferArray = pixelGroup.geometry.attributes.center.array
       const vertexIndexBufferArray =
