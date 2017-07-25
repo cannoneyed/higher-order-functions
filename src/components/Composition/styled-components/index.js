@@ -24,7 +24,7 @@ export const ActivateButton = styled.div`
   width: ${props => props.size}px;
   height: ${props => props.size + 1}px;
   position: absolute;
-  z-index: 999;
+  z-index: 100;
 
   ${props => (props.isActive ? active : '')};
 

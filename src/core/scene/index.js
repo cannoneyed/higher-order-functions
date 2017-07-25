@@ -13,7 +13,7 @@ class SceneManager {
   @observable isIntroAnimationActive = false
   @observable isIntroAnimationFinished = false
 
-  INTRO_ANIMATION_TIME = 30000
+  INTRO_ANIMATION_TIME = 33000
   INTRO_ANIMATION_OFFSET = 800
 
   @observable selectedPixel = null

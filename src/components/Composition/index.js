@@ -6,6 +6,7 @@ import { getPixelFromHash } from 'utils/hash'
 
 import * as scene from 'three/scene'
 import sceneManager from 'core/scene'
+import soundManager from 'core/sound'
 
 import Title from 'components/Title'
 import SoundPlayer from 'components/SoundPlayer'
@@ -21,7 +22,7 @@ import {
 @observer
 export default class Composition extends Component {
   state = {
-    isPixelHovered: false,
+    isActivateHovered: false,
     isSkipHovered: false,
     initialHash: null,
   }
@@ -49,11 +50,33 @@ export default class Composition extends Component {
 
   activate = ({ skip } = {}) => {
     const { isIntroAnimationActive } = sceneManager
+    const { isIntroLoaded } = soundManager
+
     if (isIntroAnimationActive) {
       return
     }
 
+    if (!isIntroLoaded && !skip) {
+      return
+    }
+
+    if (!skip) {
+      soundManager.playIntro()
+    }
+
     sceneManager.activateIntroAnimation(skip)
+  }
+
+  handleHover = (enterExit, elName) => () => {
+    const { isIntroLoaded } = soundManager
+    if (!isIntroLoaded && elName === 'activate') {
+      return
+    }
+
+    const key = elName === 'activate' ? 'isActivateHovered' : 'isSkipHovered'
+    const val = enterExit === 'enter' ? true : false
+
+    this.setState({ [key]: val })
   }
 
   handleStageClick = event => {
@@ -81,7 +104,8 @@ export default class Composition extends Component {
       !isIntroAnimationActive &&
       !this.state.initialHash
 
-    const isPixelHovered = this.state.isPixelHovered || this.state.isSkipHovered
+    const isActivateHovered =
+      this.state.isActivateHovered || this.state.isSkipHovered
 
     return (
       <StageWrapper>
@@ -94,16 +118,16 @@ export default class Composition extends Component {
             onClick={this.activate}
             size={tileSize}
             isActive={isIntroAnimationActive}
-            isHover={isPixelHovered}
-            onMouseEnter={() => this.setState({ isPixelHovered: true })}
-            onMouseLeave={() => this.setState({ isPixelHovered: false })}
+            isHover={isActivateHovered}
+            onMouseEnter={this.handleHover('enter', 'activate')}
+            onMouseLeave={this.handleHover('exit', 'activate')}
           />}
         {showSkipButton &&
           <SkipIntro
             onClick={() => this.activate({ skip: true })}
             isHover={this.state.isSkipHovered}
-            onMouseEnter={() => this.setState({ isSkipHovered: true })}
-            onMouseLeave={() => this.setState({ isSkipHovered: false })}
+            onMouseEnter={this.handleHover('enter', 'skip')}
+            onMouseLeave={this.handleHover('exit', 'skip')}
           >
             skip intro
           </SkipIntro>}

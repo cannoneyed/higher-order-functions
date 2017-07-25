@@ -11,7 +11,29 @@ import sceneManager from 'core/scene'
 class SoundManager {
   loadDelay = 200
   @observable isLoaded = false
-  @observable waveColor = colors[0]
+  @observable waveColor = colors[13]
+
+  @observable isIntroLoaded = false
+
+  loadIntroAudio() {
+    this.introPlayer = WaveSurfer.create({
+      container: '#introPlayer',
+      interact: false,
+    })
+
+    const mp3Url = `${urlRoot}/web_intro.mp3`
+    this.introPlayer.load(mp3Url)
+    this.introPlayer.on('ready', () => {
+      this.isIntroLoaded = true
+    })
+  }
+
+  playIntro() {
+    if (!this.isIntroLoaded) {
+      return
+    }
+    this.introPlayer.play()
+  }
 
   initializePlayer({ row, col, colorIndex }) {
     const compliments = colors.filter((color, index) => {
