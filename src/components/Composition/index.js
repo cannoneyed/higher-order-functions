@@ -80,6 +80,10 @@ export default class Composition extends Component {
     this.setState({ [key]: val })
   }
 
+  handleMouseMove = event => {
+    scene.mousemove(event)
+  }
+
   handleStageClick = event => {
     const { router } = this.props
     scene.click(event, router)
@@ -113,6 +117,7 @@ export default class Composition extends Component {
         <Stage
           ref={ref => (this.stage = ref)}
           onClick={this.handleStageClick}
+          onMouseMove={this.handleMouseMove}
         />
         {showActivateButton &&
           <ActivateButton

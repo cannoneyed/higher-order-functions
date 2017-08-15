@@ -44,8 +44,6 @@ export function init(container, initialHash) {
   pixelManager = new PixelManager(renderer, camera)
   pixelManager.addPixelsToScene(scene)
 
-  window.fuckYou = () => pixelManager
-
   container.appendChild(renderer.domElement)
 
   window.addEventListener('resize', onWindowResize, false)
@@ -73,8 +71,6 @@ let start
 const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
 const timeParam = { t: 0.00004 }
 const swingParam = { s: 1, stop: false }
-
-window.zoomParam = zoomParam
 
 function render() {
   TWEEN.update()
@@ -153,6 +149,49 @@ export function click(event, router) {
   }
 }
 
+let hoverSlug = null
+export function mousemove(event) {
+  if (!sceneManager.isInteractive) {
+    return
+  }
+
+  const mouse = new THREE.Vector2()
+  mouse.x = event.clientX / window.innerWidth * 2 - 1
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+  camera.updateMatrixWorld()
+  raycaster.setFromCamera(mouse, camera)
+
+  let intersects = raycaster.intersectObjects(pixelManager.pixelGroups)
+
+  if (!sceneManager.isInteractive) {
+    return
+  }
+
+  if (intersects.length > 0) {
+    const { point } = intersects[0]
+    const pixel = pixelManager.getPixelFromCoordinates(point.x, point.y)
+    const slug = pixel.colorIndex === 13 ? null : `${pixel.row}:${pixel.col}`
+
+    // We want to reset the mouseover when over a black tile
+    if (hoverSlug !== slug) {
+      if (pixel.colorIndex === 13) {
+        hoverSlug = null
+        document.body.style.cursor = 'default'
+        sceneManager.setHoveredPixel(null)
+        return
+      }
+      hoverSlug = slug
+      document.body.style.cursor = 'pointer'
+      sceneManager.setHoveredPixel(pixel)
+    }
+  } else {
+    hoverSlug = null
+    document.body.style.cursor = 'default'
+    sceneManager.setHoveredPixel(null)
+  }
+}
+
 export function zoomOut() {
   sceneManager.isInteractive = false
   sceneManager.deselectPixel()
@@ -182,10 +221,13 @@ function zoomToInitialPixel(pixel, colorIndex) {
   zoomParam.x = x
   zoomParam.y = y
   zoomParam.z = ZOOM.point
+  camera.position.z = ZOOM.point
+
   pixelManager.updateBufferGeometry()
 }
 
 export function zoomToPixel(pixel) {
+  document.body.style.cursor = 'default'
   if (tweens.zoom) {
     tweens.zoom.stop()
   }

@@ -4,19 +4,26 @@ import { observer } from 'mobx-react'
 
 import colors from 'constants/colors'
 import sceneManager from 'core/scene'
+import hash from 'utils/hash'
 
 import Fade from 'components/Fade'
 
 @observer
 export default class TitleComponent extends Component {
   render() {
-    const { isZoomedIn, isInteractive } = sceneManager
+    const { isZoomedIn, isInteractive, hoveredPixel } = sceneManager
     const visible = !isZoomedIn && isInteractive
+
+    const hashStr = hoveredPixel ? hash(hoveredPixel) : '0000'
+    const colorIndex = hoveredPixel ? parseInt(hashStr[0], 16) : 13
 
     return (
       <Fade visible={visible}>
         <TitleWrapper>
           <Title>
+            <Hash colorIndex={colorIndex}>
+              {hashStr}
+            </Hash>
             <Prompt>/~​‌d‌oglogic: </Prompt>
             <Name>higher or​‌đ​‌er functions</Name>
           </Title>
@@ -35,6 +42,8 @@ const Name = styled.span`
   color: ${colors[0]};
   /* multi-line */
 `
+
+const Hash = styled.span`color: ${props => colors[props.colorIndex]};`
 
 const TitleWrapper = styled.div`
   pointer-events: none;

@@ -28,6 +28,12 @@ export default class SoundPlayer extends Component {
     const zoomedTileLoaderVisible = isInteractive && !isLoaded
     const showLoader = zoomedTileLoaderVisible || !isIntroLoaded
 
+    // Trigger the sound player when the sound is loaded and the scene is zoomed in
+    // (definitely not the best to do it in the render method, but whatever)
+    if (isLoaded && isInteractive) {
+      soundManager.playSound()
+    }
+
     return (
       <SoundPlayerWrapper visible={visible} size={tileSize}>
         <Hash />
@@ -39,7 +45,7 @@ export default class SoundPlayer extends Component {
           id="waveform"
           size={tileSize / 3}
           isInteractive={isInteractive}
-          onClick={soundManager.playSound}
+          onClick={soundManager.toggleSound}
         />
         <IntroSoundPlayer id="introPlayer" />
       </SoundPlayerWrapper>

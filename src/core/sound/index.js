@@ -90,6 +90,14 @@ class SoundManager {
       return
     }
 
+    this.wavesurfer.play()
+  }
+
+  toggleSound = () => {
+    if (!this.isLoaded) {
+      return
+    }
+
     this.wavesurfer.playPause()
   }
 }

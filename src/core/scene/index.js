@@ -17,6 +17,7 @@ class SceneManager {
   INTRO_ANIMATION_OFFSET = 800
 
   @observable selectedPixel = null
+  @observable hoveredPixel = null
   @observable tileSize = 128
 
   constructor() {
@@ -43,6 +44,10 @@ class SceneManager {
     setTimeout(() => {
       soundManager.loadSound({ row, col, colorIndex })
     }, soundManager.loadDelay)
+  }
+
+  setHoveredPixel = pixel => {
+    this.hoveredPixel = pixel
   }
 
   deselectPixel = () => {
