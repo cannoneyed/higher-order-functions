@@ -12,7 +12,8 @@ const ZOOM = {
   point: 30,
 }
 
-const ZOOM_TIME = 3000
+const ZOOM_IN_OUT_TIME = 3000
+const ZOOM_BETWEEN_TIME = 2000
 const SWING = 500
 
 const tweens = {
@@ -161,7 +162,7 @@ export function zoomOut() {
   }
 
   tweens.zoom = new TWEEN.Tween(zoomParam)
-    .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_TIME)
+    .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_IN_OUT_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
     .onComplete(() => {
@@ -194,8 +195,12 @@ export function zoomToPixel(pixel) {
   sceneManager.isInteractive = false
   sceneManager.selectPixel(pixel)
 
+  const zoomTime = sceneManager.isZoomedIn
+    ? ZOOM_BETWEEN_TIME
+    : ZOOM_IN_OUT_TIME
+
   tweens.zoom = new TWEEN.Tween(zoomParam)
-    .to({ x, y, z: ZOOM.point }, ZOOM_TIME)
+    .to({ x, y, z: ZOOM.point }, zoomTime)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
     .onComplete(() => {
