@@ -9,6 +9,7 @@ import sceneManager from 'core/scene'
 import soundManager from 'core/sound'
 
 import Title from 'components/Title'
+import Hash from 'components/Hash'
 import SoundPlayer from 'components/SoundPlayer'
 
 import {

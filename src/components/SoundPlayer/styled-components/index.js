@@ -38,6 +38,7 @@ export const SoundPlayerWrapper = styled.div`
   z-index: 999;
 
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 `

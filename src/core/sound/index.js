@@ -63,12 +63,19 @@ class SoundManager {
 
     this.initializePlayer({ row, col, colorIndex })
     const hashStr = hash({ row, col })
-    const hashDir = hashStr.substring(0, 1)
-    const mp3Url = `${urlRoot}/${hashDir}/${hashStr}.mp3`
+
+    const mp3Url = this.getMp3Url(hashStr)
+
     this.wavesurfer.load(mp3Url)
     this.wavesurfer.on('ready', () => {
       this.isLoaded = true
     })
+  }
+
+  getMp3Url = hashStr => {
+    const hashDir = hashStr.substring(0, 1)
+    const mp3Url = `${urlRoot}/${hashDir}/${hashStr}.mp3`
+    return mp3Url
   }
 
   unloadSound = () => {

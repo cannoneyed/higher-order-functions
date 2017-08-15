@@ -30,6 +30,7 @@ export default class SoundPlayer extends Component {
 
     return (
       <SoundPlayerWrapper visible={visible} size={tileSize}>
+        <Hash />
         {showLoader &&
           <SpinnerWrapper>
             <Spinner name="wandering-cubes" color={waveColor} />
@@ -40,7 +41,6 @@ export default class SoundPlayer extends Component {
           isInteractive={isInteractive}
           onClick={soundManager.playSound}
         />
-        <Hash />
         <IntroSoundPlayer id="introPlayer" />
       </SoundPlayerWrapper>
     )

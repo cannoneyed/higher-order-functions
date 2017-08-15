@@ -4,9 +4,11 @@ import { observer } from 'mobx-react'
 import { withProps } from 'recompose'
 
 import sceneManager from 'core/scene'
+import soundManager from 'core/sound'
 import hash from 'utils/hash'
 
 import Fade from 'components/Fade'
+import Icon from 'components/Icon'
 
 @observer
 @withProps(() => ({
@@ -32,6 +34,20 @@ export default class HashComponent extends Component {
     }
   }
 
+  handleDownload = () => {
+    const { selectedPixel } = this.state
+    const hashStr = hash(selectedPixel)
+
+    const url = soundManager.getMp3Url(hashStr)
+
+    const link = document.createElement('a')
+    link.download = name
+    link.href = url
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   isVisible = props => {
     const { isZoomedIn, isInteractive } = props
     return isZoomedIn && isInteractive
@@ -42,29 +58,33 @@ export default class HashComponent extends Component {
     const visible = this.isVisible(this.props)
 
     return (
-      <Fade visible={visible}>
-        <HashWrapper>
-          <Hash>
+      <HashWrapper>
+        <Fade visible={visible}>
+          <Hash onClick={() => this.handleDownload()}>
             {hash(selectedPixel)}
+            <Spacer />
+            <Icon type="file-download" />
           </Hash>
-        </HashWrapper>
-      </Fade>
+        </Fade>
+      </HashWrapper>
     )
   }
 }
 
-const HashWrapper = styled.div`
-  pointer-events: none;
-  position: fixed;
-  bottom: 50%;
-  width: 100%;
-  height: 8rem;
+const Spacer = styled.span`
+  /* single-line */
+  margin-right: 3px;
+`
 
+const HashWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  position: absolute;
+  margin-top: -60px;
 `
 const Hash = styled.div`
+  cursor: pointer;
   font-size: 1.5rem;
   padding: 0.5rem;
   background-color: rgba(0, 0, 0, 0.5);
