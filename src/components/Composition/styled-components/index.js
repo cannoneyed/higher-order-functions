@@ -9,37 +9,48 @@ export const StageWrapper = styled.div`
   background-color: #000600;
 `
 
-const hover = css`
-  background-color: #f42b2e;
-  transform: scale3d(1.1, 1.1, 1)
+export const Stage = styled.div`
+  width: 100%;
+  height: 100%;
 `
 
 const active = css`
   transform: scale3d(4.5, 4.5, 1);
 `
 
+const centered = css`
+  margin: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+`
+
+const buttonHover = css`
+  background-color: #f42b2e;
+  transform: scale3d(1.1, 1.1, 1);
+`
+
 export const ActivateButton = styled.div`
   backface-visibility: hidden;
+  ${centered};
+
   cursor: ${props => (props.isActive ? '' : 'pointer')};
   width: ${props => props.size}px;
   height: ${props => props.size + 1}px;
-  position: absolute;
   z-index: 100;
 
   ${props => (props.isActive ? active : '')};
 
-  ${props => (props.isHover && !props.isActive ? hover : '')};
+  ${props => (props.isHover && !props.isActive ? buttonHover : '')};
 
   transition: all ${props => (props.isActive ? 1200 : 250)}ms
-    cubic-bezier(0.000, 1.020, 0.510, 0.950);
+    cubic-bezier(0, 1.02, 0.51, 0.95);
+  touch-action: manipulation;
 `
 
-export const Stage = styled.div`
-  width: 100%;
-  height: 100%;
-`
-
-const hovered = css`
+const skipHover = css`
   color: #f42b2e;
   opacity: 1;
 `
@@ -50,6 +61,8 @@ export const SkipIntro = styled.div`
   right: 20px;
   cursor: pointer;
   opacity: 0.5;
-  ${props => (props.isHover ? hovered : '')};
+  ${props => (props.isHover ? skipHover : '')};
   transition: all 250ms;
+
+  touch-action: manipulation;
 `
