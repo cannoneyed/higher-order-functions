@@ -8,6 +8,8 @@ import hash from 'utils/hash'
 
 import Fade from 'components/Fade'
 
+import windowManager from 'core/window'
+
 @observer
 export default class TitleComponent extends Component {
   render() {
@@ -17,15 +19,18 @@ export default class TitleComponent extends Component {
     const hashStr = hoveredPixel ? hash(hoveredPixel) : '0000'
     const colorIndex = hoveredPixel ? parseInt(hashStr[0], 16) : 13
 
+    // Calculate a scale factor to shrink the title if necessary
+    const { width } = windowManager
+    const miminumWidth = 500
+    const scale = Math.min(width, miminumWidth) / miminumWidth
+
     return (
       <Fade visible={visible}>
-        <TitleWrapper>
+        <TitleWrapper scale={scale}>
           <Title>
-            <Hash colorIndex={colorIndex}>
-              {hashStr}
-            </Hash>
+            <Hash colorIndex={colorIndex}>{hashStr}</Hash>
             <Prompt>/~​‌d‌oglogic: </Prompt>
-            <Name>higher or​‌đ​‌er functions</Name>
+            <Name>higher or​‌d‌er functions</Name>
           </Title>
         </TitleWrapper>
       </Fade>
@@ -40,24 +45,32 @@ const Prompt = styled.span`
 
 const Name = styled.span`
   color: ${colors[0]};
-  /* multi-line */
+  white-space: nowrap;
 `
 
-const Hash = styled.span`color: ${props => colors[props.colorIndex]};`
+const Hash = styled.span`
+  color: ${props => colors[props.colorIndex]};
+`
 
 const TitleWrapper = styled.div`
-  pointer-events: none;
-  position: fixed;
+  position: absolute;
+  left: 0;
   bottom: 0;
+  right: 0;
+
+  pointer-events: none;
   width: 100%;
   height: 8rem;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  transform: scale(${props => props.scale || 1});
 `
 const Title = styled.div`
   font-size: 1.5rem;
   padding: 0.5rem;
   background-color: rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
 `

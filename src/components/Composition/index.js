@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import { observer } from 'mobx-react'
 import { withRoute } from 'react-router5'
 import { getPixelFromHash } from 'utils/hash'
+import isMobile from 'utils/is-mobile'
 
 import * as scene from 'three/scene'
 import sceneManager from 'core/scene'
@@ -89,6 +90,22 @@ export default class Composition extends Component {
     scene.click(event, router)
   }
 
+  makeButtonHandler = type => event => {
+    const hoverKey = type === 'activate' ? 'isActivateHovered' : 'isSkipHovered'
+    const isHovered = this.state[hoverKey]
+
+    // We need to compensate to manually set the hover state on mobile (where there are not hover
+    // mouse effects), since the "hover" element is what animates on activation). We then wait for
+    // the element to appear before beginning the transition
+    this.handleHover('enter', type)
+    const delay = isMobile() ? 250 : 0
+    const skip = type === 'skip'
+
+    setTimeout(() => {
+      this.activate({ skip })
+    }, delay)
+  }
+
   render() {
     const {
       hasViewedIntro,
@@ -119,24 +136,26 @@ export default class Composition extends Component {
           onClick={this.handleStageClick}
           onMouseMove={this.handleMouseMove}
         />
-        {showActivateButton &&
+        {showActivateButton && (
           <ActivateButton
-            onClick={this.activate}
+            onClick={this.makeButtonHandler('activate')}
             size={tileSize}
             isActive={isIntroAnimationActive}
             isHover={isActivateHovered}
             onMouseEnter={this.handleHover('enter', 'activate')}
             onMouseLeave={this.handleHover('exit', 'activate')}
-          />}
-        {showSkipButton &&
+          />
+        )}
+        {showSkipButton && (
           <SkipIntro
-            onClick={() => this.activate({ skip: true })}
+            onClick={this.makeButtonHandler('skip')}
             isHover={this.state.isSkipHovered}
             onMouseEnter={this.handleHover('enter', 'skip')}
             onMouseLeave={this.handleHover('exit', 'skip')}
           >
             skip intro
-          </SkipIntro>}
+          </SkipIntro>
+        )}
         <SoundPlayer />
         <Title />
       </StageWrapper>
