@@ -69,6 +69,7 @@ function onWindowResize() {
 let start
 
 const zoomParam = { z: ZOOM.min, x: 0, y: 0 }
+const rotateParam = { x: 0, y: 0 }
 const timeParam = { t: 0.00004 }
 const swingParam = { s: 1, stop: false }
 
@@ -108,6 +109,13 @@ function render() {
   camera.position.x = zoomParam.x
   camera.position.y = zoomParam.y
   camera.position.z = zoomParam.z
+
+  const zoomRange = ZOOM.max - ZOOM.min
+  const zoomPercent = (zoomParam.z - ZOOM.min) / zoomRange
+  const xRotation = 0.01 * rotateParam.y * zoomPercent
+  const yRotation = 0.01 * rotateParam.x * zoomPercent
+  const r = new THREE.Euler(xRotation, yRotation, 0)
+  camera.setRotationFromEuler(r)
 
   renderer.render(scene, camera)
 }
@@ -152,17 +160,16 @@ export function click(event, router) {
 let hoverSlug = null
 
 export function mousemove(event) {
-  if (!sceneManager.isInteractive) {
-    return
-  }
-
   const mouse = new THREE.Vector2()
   mouse.x = event.clientX / window.innerWidth * 2 - 1
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
 
-  if (!sceneManager.isZoomedIn) {
-    const r = new THREE.Euler(0.01 * mouse.y, -0.01 * mouse.x, 0)
-    camera.setRotationFromEuler(r)
+  // Handle the pan / tilt even when the scene is not interactive
+  rotateParam.x = mouse.x
+  rotateParam.y = mouse.y
+
+  if (!sceneManager.isInteractive) {
+    return
   }
 
   camera.updateMatrixWorld()
