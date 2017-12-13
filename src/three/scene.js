@@ -150,6 +150,7 @@ export function click(event, router) {
 }
 
 let hoverSlug = null
+
 export function mousemove(event) {
   if (!sceneManager.isInteractive) {
     return
@@ -158,6 +159,11 @@ export function mousemove(event) {
   const mouse = new THREE.Vector2()
   mouse.x = event.clientX / window.innerWidth * 2 - 1
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+  if (!sceneManager.isZoomedIn) {
+    const r = new THREE.Euler(0.01 * mouse.y, -0.01 * mouse.x, 0)
+    camera.setRotationFromEuler(r)
+  }
 
   camera.updateMatrixWorld()
   raycaster.setFromCamera(mouse, camera)
