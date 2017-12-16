@@ -110,14 +110,18 @@ function render() {
   camera.position.y = zoomParam.y
   camera.position.z = zoomParam.z
 
+  transitionCameraPan()
+
+  renderer.render(scene, camera)
+}
+
+function transitionCameraPan() {
   const zoomRange = ZOOM.max - ZOOM.min
   const zoomPercent = (zoomParam.z - ZOOM.min) / zoomRange
   const xRotation = 0.01 * rotateParam.y * zoomPercent
   const yRotation = 0.01 * rotateParam.x * zoomPercent
   const r = new THREE.Euler(xRotation, yRotation, 0)
   camera.setRotationFromEuler(r)
-
-  renderer.render(scene, camera)
 }
 
 export function click(event, router) {
@@ -206,6 +210,10 @@ export function mousemove(event) {
 }
 
 export function zoomOut() {
+  if (!sceneManager.isZoomedIn) {
+    return
+  }
+
   sceneManager.isInteractive = false
   sceneManager.deselectPixel()
 
