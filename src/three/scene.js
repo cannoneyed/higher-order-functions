@@ -37,12 +37,15 @@ export function init(container, initialHash) {
   raycaster = new THREE.Raycaster()
   scene = new THREE.Scene()
 
-  renderer = new THREE.WebGLRenderer()
+  renderer = new THREE.WebGLRenderer({ antialias: false })
   renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setSize(window.innerWidth, window.innerHeight)
 
   pixelManager = new PixelManager(renderer, camera)
   pixelManager.addPixelsToScene(scene)
+
+  // Add a dummy plane to the scene to fix a clearing bug in safari
+  addDummyPlane()
 
   container.appendChild(renderer.domElement)
 
@@ -56,6 +59,17 @@ export function init(container, initialHash) {
   }
 
   animate()
+}
+
+function addDummyPlane() {
+  const geometry = new THREE.PlaneGeometry(
+    window.innerWidth * 100,
+    window.innerHeight * 100,
+  )
+  const material = new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0 })
+  const plane = new THREE.Mesh(geometry, material)
+  plane.position.z = -2001
+  scene.add(plane)
 }
 
 function onWindowResize() {
