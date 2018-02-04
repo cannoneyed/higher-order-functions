@@ -21,7 +21,7 @@ class SoundManager {
       interact: false,
     })
 
-    const mp3Url = `${urlRoot}/web_intro.mp3`
+    const mp3Url = `${urlRoot}/web_intro.ogg`
     this.introPlayer.load(mp3Url)
     this.introPlayer.on('ready', () => {
       this.isIntroLoaded = true
@@ -40,7 +40,7 @@ class SoundManager {
       return index !== colorIndex && index !== 0
     })
 
-    const complimentIndex = row * col % 12
+    const complimentIndex = (row * col) % 12
     const progressColor = compliments[complimentIndex]
 
     const light = colorIndex === 0 || colorIndex === 12
