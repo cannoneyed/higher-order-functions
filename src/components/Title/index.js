@@ -29,7 +29,7 @@ export default class TitleComponent extends Component {
         <TitleWrapper scale={scale}>
           <Title>
             <Hash colorIndex={colorIndex}>{hashStr}</Hash>
-            <Prompt>/~​‌d‌oglogic: </Prompt>
+            <Prompt>/~​‌d‌og_logic: </Prompt>
             <Name>higher or​‌d‌er functions</Name>
           </Title>
         </TitleWrapper>
