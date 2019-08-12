@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled, { css } from 'styled-components';
 
 export const StageWrapper = styled.div`
   width: 100%;
@@ -7,16 +7,16 @@ export const StageWrapper = styled.div`
   justify-content: center;
   align-items: center;
   background-color: #000600;
-`
+`;
 
 export const Stage = styled.div`
   width: 100%;
   height: 100%;
-`
+`;
 
 const active = css`
   transform: scale3d(4.5, 4.5, 1);
-`
+`;
 
 const centered = css`
   margin: auto;
@@ -25,12 +25,12 @@ const centered = css`
   left: 0;
   bottom: 0;
   right: 0;
-`
+`;
 
 const buttonHover = css`
   background-color: #f42b2e;
   transform: scale3d(1.1, 1.1, 1);
-`
+`;
 
 export const ActivateButton = styled.div`
   backface-visibility: hidden;
@@ -45,15 +45,14 @@ export const ActivateButton = styled.div`
 
   ${props => (props.isHover && !props.isActive ? buttonHover : '')};
 
-  transition: all ${props => (props.isActive ? 1200 : 250)}ms
-    cubic-bezier(0, 1.02, 0.51, 0.95);
+  transition: all ${props => (props.isActive ? 1200 : 250)}ms cubic-bezier(0, 1.02, 0.51, 0.95);
   touch-action: manipulation;
-`
+`;
 
 const skipHover = css`
   color: #f42b2e;
   opacity: 1;
-`
+`;
 
 export const SkipIntro = styled.div`
   position: fixed;
@@ -65,4 +64,4 @@ export const SkipIntro = styled.div`
   transition: all 250ms;
 
   touch-action: manipulation;
-`
+`;

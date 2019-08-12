@@ -1,5 +1,5 @@
-import styled, { css } from 'styled-components'
-import soundManager from 'core/sound'
+import styled, { css } from 'styled-components';
+import soundManager from 'core/sound';
 
 const centered = css`
   margin: auto;
@@ -8,7 +8,7 @@ const centered = css`
   left: 0;
   bottom: 0;
   right: 0;
-`
+`;
 
 export const IntroSoundPlayer = styled.div`
   position: fixed;
@@ -16,7 +16,7 @@ export const IntroSoundPlayer = styled.div`
   left: 0;
   display: none;
   visibility: hidden;
-`
+`;
 
 export const SpinnerWrapper = styled.div`
   position: absolute;
@@ -27,7 +27,7 @@ export const SpinnerWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-`
+`;
 
 export const Waveform = styled.div`
   cursor: pointer;
@@ -36,7 +36,7 @@ export const Waveform = styled.div`
 
   opacity: ${props => (props.isInteractive ? 1 : 0)};
   transition: all ${soundManager.loadDelay}ms linear;
-`
+`;
 
 export const SoundPlayerWrapper = styled.div`
   ${centered};
@@ -50,4 +50,4 @@ export const SoundPlayerWrapper = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-`
+`;

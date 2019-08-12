@@ -13,4 +13,4 @@ export default [
   2100, // 11: Hue[.23, .9, 1] (vs)
   2058, // 12: Hue[.2, .9, 1] (sweetlights)
   10168, // 13: black
-]
+];

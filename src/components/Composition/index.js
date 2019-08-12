@@ -1,24 +1,19 @@
-import React, { Component } from 'react'
-import ReactDOM from 'react-dom'
-import { observer } from 'mobx-react'
-import { withRoute } from 'react-router5'
-import { getPixelFromHash } from 'utils/hash'
-import isMobile from 'utils/is-mobile'
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+import { observer } from 'mobx-react';
+import { withRoute } from 'react-router5';
+import { getPixelFromHash } from 'utils/hash';
+import isMobile from 'utils/is-mobile';
 
-import * as scene from 'three/scene'
-import sceneManager from 'core/scene'
-import soundManager from 'core/sound'
+import * as scene from 'three/scene';
+import sceneManager from 'core/scene';
+import soundManager from 'core/sound';
 
-import Title from 'components/Title'
-import Hash from 'components/Hash'
-import SoundPlayer from 'components/SoundPlayer'
+import Title from 'components/Title';
+import Hash from 'components/Hash';
+import SoundPlayer from 'components/SoundPlayer';
 
-import {
-  ActivateButton,
-  Stage,
-  StageWrapper,
-  SkipIntro,
-} from './styled-components'
+import { ActivateButton, Stage, StageWrapper, SkipIntro } from './styled-components';
 
 @withRoute
 @observer
@@ -27,84 +22,84 @@ export default class Composition extends Component {
     isActivateHovered: false,
     isSkipHovered: false,
     initialHash: null,
-  }
+  };
 
   componentDidMount() {
-    const { route } = this.props
-    const initialHash = route.name === 'hash' ? route.params.hash : null
-    const container = ReactDOM.findDOMNode(this.stage)
-    scene.init(container, initialHash)
+    const { route } = this.props;
+    const initialHash = route.name === 'hash' ? route.params.hash : null;
+    const container = ReactDOM.findDOMNode(this.stage);
+    scene.init(container, initialHash);
 
-    this.setState({ initialHash }) // eslint-disable-line react/no-did-mount-set-state
+    this.setState({ initialHash }); // eslint-disable-line react/no-did-mount-set-state
   }
 
   componentWillReceiveProps(nextProps) {
     if (this.props.route.path !== nextProps.route.path) {
-      const hashStr = nextProps.route.params.hash
+      const hashStr = nextProps.route.params.hash;
       if (hashStr) {
-        const pixel = getPixelFromHash(hashStr)
-        scene.zoomToPixel(pixel)
+        const pixel = getPixelFromHash(hashStr);
+        scene.zoomToPixel(pixel);
       } else {
-        scene.zoomOut()
+        scene.zoomOut();
       }
     }
   }
 
   activate = ({ skip } = {}) => {
-    const { isIntroAnimationActive } = sceneManager
-    const { isIntroLoaded } = soundManager
+    const { isIntroAnimationActive } = sceneManager;
+    const { isIntroLoaded } = soundManager;
 
     if (isIntroAnimationActive) {
-      return
+      return;
     }
 
     if (!isIntroLoaded && !skip) {
-      return
+      return;
     }
 
     if (!skip) {
-      soundManager.playIntro()
+      soundManager.playIntro();
     }
 
-    sceneManager.activateIntroAnimation(skip)
-  }
+    sceneManager.activateIntroAnimation(skip);
+  };
 
   handleHover = (enterExit, elName) => () => {
-    const { isIntroLoaded } = soundManager
+    const { isIntroLoaded } = soundManager;
     if (!isIntroLoaded && elName === 'activate') {
-      return
+      return;
     }
 
-    const key = elName === 'activate' ? 'isActivateHovered' : 'isSkipHovered'
-    const val = enterExit === 'enter' ? true : false
+    const key = elName === 'activate' ? 'isActivateHovered' : 'isSkipHovered';
+    const val = enterExit === 'enter' ? true : false;
 
-    this.setState({ [key]: val })
-  }
+    this.setState({ [key]: val });
+  };
 
   handleMouseMove = event => {
-    scene.mousemove(event)
-  }
+    scene.mousemove(event);
+  };
 
   handleStageClick = event => {
-    const { router } = this.props
-    scene.click(event, router)
-  }
+    const { router } = this.props;
+    scene.click(event, router);
+  };
 
   makeButtonHandler = type => event => {
-    const hoverKey = type === 'activate' ? 'isActivateHovered' : 'isSkipHovered'
-    const isHovered = this.state[hoverKey]
+    const hoverKey = type === 'activate' ? 'isActivateHovered' : 'isSkipHovered';
+    const isHovered = this.state[hoverKey];
 
     // We need to compensate to manually set the hover state on mobile (where there are not hover
     // mouse effects), since the "hover" element is what animates on activation). We then wait for
     // the element to appear before beginning the transition
-    this.handleHover('enter', type)
-    const delay = isMobile() ? 250 : 0
-    const skip = type === 'skip'
+    this.handleHover('enter', type);
+    const delay = isMobile() ? 250 : 0;
+    const skip = type === 'skip';
 
     setTimeout(() => {
-      this.activate({ skip })
-    }, delay)
-  }
+      this.activate({ skip });
+    }, delay);
+  };
 
   render() {
     const {
@@ -113,21 +108,20 @@ export default class Composition extends Component {
       isIntroAnimationFinished,
       isInteractive,
       tileSize,
-    } = sceneManager
+    } = sceneManager;
 
-    let showActivateButton = !isInteractive
+    let showActivateButton = !isInteractive;
     if (isIntroAnimationFinished) {
-      showActivateButton = false
+      showActivateButton = false;
     }
 
     const showSkipButton =
       hasViewedIntro &&
       !isIntroAnimationFinished &&
       !isIntroAnimationActive &&
-      !this.state.initialHash
+      !this.state.initialHash;
 
-    const isActivateHovered =
-      this.state.isActivateHovered || this.state.isSkipHovered
+    const isActivateHovered = this.state.isActivateHovered || this.state.isSkipHovered;
 
     return (
       <StageWrapper>
@@ -159,6 +153,6 @@ export default class Composition extends Component {
         <SoundPlayer />
         <Title />
       </StageWrapper>
-    )
+    );
   }
 }

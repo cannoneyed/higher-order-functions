@@ -3,7 +3,7 @@ export const fragmentShader = `
     void main() {
         gl_FragColor = vec4( vColor, 1.0 );
     }
-`
+`;
 
 export const vertexShader = `
     attribute float vertexIndex;
@@ -36,4 +36,4 @@ export const vertexShader = `
         vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
     }
-`
+`;

@@ -1,50 +1,67 @@
-import { observable } from 'mobx'
-import WaveSurfer from 'wavesurfer.js'
-import colors from 'constants/colors'
-import hash from '../../utils/hash'
+import { observable } from 'mobx';
+import WaveSurfer from 'wavesurfer.js';
+import colors from 'constants/colors';
+import hash from '../../utils/hash';
 
-const urlRoot =
-  'https://s3-us-west-2.amazonaws.com/higher-order-functions.clips'
+const urlRoot = 'https://s3-us-west-2.amazonaws.com/higher-order-functions.clips';
 
-import sceneManager from 'core/scene'
+import sceneManager from 'core/scene';
 
 class SoundManager {
-  loadDelay = 200
-  @observable isLoaded = false
-  @observable waveColor = colors[13]
+  loadDelay = 200;
+  @observable isLoaded = false;
+  @observable waveColor = colors[13];
 
-  @observable isIntroLoaded = false
+  @observable isIntroLoaded = false;
+
+  constructor() {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    if (isSafari) {
+      // Safari 11 or newer automatically suspends new AudioContext's that aren't
+      // created in response to a user-gesture, like a click or tap, so create one
+      // here (inc. the script processor)
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this.context = new AudioContext();
+      this.processor = this.context.createScriptProcessor(1024, 1, 1);
+    }
+  }
 
   loadIntroAudio() {
     this.introPlayer = WaveSurfer.create({
       container: '#introPlayer',
       interact: false,
-    })
+      audioContext: this.context,
+      audioScriptProcessor: this.processor,
+    });
 
-    const mp3Url = `${urlRoot}/web_intro.ogg`
-    this.introPlayer.load(mp3Url)
+    const mp3Url = `${urlRoot}/web_intro.mp3`;
+    this.introPlayer.load(mp3Url);
+    this.introPlayer.on('loading', progress => {
+      if (progress === 100) this.isIntroLoaded = true;
+    });
     this.introPlayer.on('ready', () => {
-      this.isIntroLoaded = true
-    })
+      this.isIntroLoaded = true;
+    });
   }
 
   playIntro() {
     if (!this.isIntroLoaded) {
-      return
+      return;
     }
-    this.introPlayer.play()
+    this.introPlayer.play();
   }
 
   initializePlayer({ row, col, colorIndex }) {
     const compliments = colors.filter((color, index) => {
-      return index !== colorIndex && index !== 0
-    })
+      return index !== colorIndex && index !== 0;
+    });
 
-    const complimentIndex = (row * col) % 12
-    const progressColor = compliments[complimentIndex]
+    const complimentIndex = (row * col) % 12;
+    const progressColor = compliments[complimentIndex];
 
-    const light = colorIndex === 0 || colorIndex === 12
-    this.waveColor = light ? colors[13] : colors[0]
+    const light = colorIndex === 0 || colorIndex === 12;
+    this.waveColor = light ? colors[13] : colors[0];
 
     this.wavesurfer = WaveSurfer.create({
       container: '#waveform',
@@ -55,51 +72,51 @@ class SoundManager {
       height: sceneManager.tileSize / 3,
       cursorWidth: 0,
       interact: false,
-    })
+    });
   }
 
   loadSound = ({ row, col, colorIndex }) => {
-    this.unloadSound()
+    this.unloadSound();
 
-    this.initializePlayer({ row, col, colorIndex })
-    const hashStr = hash({ row, col })
+    this.initializePlayer({ row, col, colorIndex });
+    const hashStr = hash({ row, col });
 
-    const mp3Url = this.getMp3Url(hashStr)
+    const mp3Url = this.getMp3Url(hashStr);
 
-    this.wavesurfer.load(mp3Url)
+    this.wavesurfer.load(mp3Url);
     this.wavesurfer.on('ready', () => {
-      this.isLoaded = true
-    })
-  }
+      this.isLoaded = true;
+    });
+  };
 
   getMp3Url = hashStr => {
-    const hashDir = hashStr.substring(0, 1)
-    const mp3Url = `${urlRoot}/${hashDir}/${hashStr}.mp3`
-    return mp3Url
-  }
+    const hashDir = hashStr.substring(0, 1);
+    const mp3Url = `${urlRoot}/${hashDir}/${hashStr}.mp3`;
+    return mp3Url;
+  };
 
   unloadSound = () => {
-    this.isLoaded = false
+    this.isLoaded = false;
     if (this.wavesurfer) {
-      this.wavesurfer.destroy()
+      this.wavesurfer.destroy();
     }
-  }
+  };
 
   playSound = () => {
     if (!this.isLoaded) {
-      return
+      return;
     }
 
-    this.wavesurfer.play()
-  }
+    this.wavesurfer.play();
+  };
 
   toggleSound = () => {
     if (!this.isLoaded) {
-      return
+      return;
     }
 
-    this.wavesurfer.playPause()
-  }
+    this.wavesurfer.playPause();
+  };
 }
 
-export default new SoundManager()
+export default new SoundManager();
