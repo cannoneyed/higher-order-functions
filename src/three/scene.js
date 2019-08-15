@@ -126,9 +126,16 @@ function render() {
 function transitionCameraPan() {
   const zoomRange = ZOOM.max - ZOOM.min;
   const zoomPercent = (zoomParam.z - ZOOM.min) / zoomRange;
-  const xRotation = 0.01 * rotateParam.y * zoomPercent;
-  const yRotation = 0.01 * rotateParam.x * zoomPercent;
-  const r = new THREE.Euler(xRotation, yRotation, 0);
+  const rotationTargetX = 0.01 * rotateParam.y * zoomPercent;
+  const rotationTargetY = 0.01 * rotateParam.x * zoomPercent;
+
+  const deltaRotationX = rotationTargetX - camera.rotation.x;
+  const deltaRotationY = rotationTargetY - camera.rotation.y;
+
+  const stepX = deltaRotationX / 10;
+  const stepY = deltaRotationY / 10;
+
+  const r = new THREE.Euler(camera.rotation.x + stepX, camera.rotation.y + stepY, 0);
   camera.setRotationFromEuler(r);
 }
 
