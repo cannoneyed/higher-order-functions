@@ -8,6 +8,7 @@ import hash, { getPixelFromHash } from 'utils/hash';
 // Constants
 const ZOOM = {
   min: 10,
+  med: 200,
   max: 1450,
   point: 30,
 };
@@ -222,6 +223,44 @@ export function mousemove(event) {
     document.body.style.cursor = 'default';
     sceneManager.setHoveredPixel(null);
   }
+}
+
+let startZoom = null;
+export function pinchZoom(scale) {
+  if (!sceneManager.isInteractive || sceneManager.isZoomedIn) {
+    return;
+  }
+  if (startZoom === null) startZoom = zoomParam.z;
+  const zoom = startZoom / scale;
+  zoomParam.z = _.clamp(zoom, ZOOM.med, ZOOM.max);
+}
+
+export function pinchZoomEnd() {
+  startZoom = null;
+}
+
+let startX = null;
+let startY = null;
+export function pan(deltaX, deltaY) {
+  if (!sceneManager.isInteractive || sceneManager.isZoomedIn) {
+    return;
+  }
+  if (startX === null) startX = zoomParam.x;
+  if (startY === null) startY = zoomParam.y;
+
+  const maxX = 2;
+  const minX = -2;
+
+  const minY = -2;
+  const maxY = 2;
+
+  zoomParam.x = _.clamp(startX - deltaX, minX, maxX);
+  zoomParam.y = _.clamp(startY + deltaY, minY, maxY);
+}
+
+export function panEnd() {
+  startX = null;
+  startY = null;
 }
 
 export function zoomOut() {

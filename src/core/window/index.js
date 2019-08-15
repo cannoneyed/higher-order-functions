@@ -1,5 +1,8 @@
 import { observable } from 'mobx';
 import { throttle } from 'lodash';
+import * as Hammer from 'hammerjs';
+
+import { pinchZoom, pinchZoomEnd, pan, panEnd } from '../../three/scene';
 
 class WindowManager {
   @observable width = window.innerWidth;
@@ -14,15 +17,30 @@ class WindowManager {
       }
     });
 
-    document.addEventListener(
-      'touchmove',
-      event => {
-        if (event.scale !== 1) {
-          event.preventDefault();
-        }
-      },
-      { passive: false }
-    );
+    const hammertime = new Hammer(document.querySelector('#root'), {
+      touchAction: 'none',
+      preventDefault: true,
+    });
+    hammertime.get('pinch').set({ enable: true });
+    hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+    hammertime.on('pinch', ev => {
+      ev.preventDefault();
+      pinchZoom(event.scale);
+    });
+
+    hammertime.on('pinchend', ev => {
+      ev.preventDefault();
+      pinchZoomEnd();
+    });
+
+    hammertime.on('pan', ev => {
+      ev.preventDefault();
+      pan(ev.deltaX, ev.deltaY);
+    });
+
+    hammertime.on('panend', ev => {
+      panEnd();
+    });
   }
 
   resize = throttle(() => {
