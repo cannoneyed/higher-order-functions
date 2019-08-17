@@ -31,6 +31,10 @@ export default class Composition extends Component {
     scene.init(container, initialHash);
 
     this.setState({ initialHash }); // eslint-disable-line react/no-did-mount-set-state
+
+    setTimeout(() => {
+      this.activate({ skip: 'skip' });
+    }, 200);
   }
 
   componentWillReceiveProps(nextProps) {

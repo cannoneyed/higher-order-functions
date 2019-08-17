@@ -8,7 +8,7 @@ const threeColorsByIndex = _.map(colorMap, (colorString, colorIndex) => {
   return new THREE.Color(getHexColorByIndex(colorIndex));
 });
 
-const PIXEL_SIZE = 10;
+export const PIXEL_SIZE = 10;
 const MAX_PIXEL_SIZE_PX = 128;
 const N_GROUPS = 3;
 const MAGIC_NUMBER = 551;
@@ -21,6 +21,9 @@ const getNGroups = colorIndex => (colorIndex * 1 === 0 ? N_GROUPS * 3 : N_GROUPS
 
 export default class PixelManager {
   constructor(renderer, camera) {
+    this.nRows = data.length;
+    this.nCols = data[0].length;
+
     const countsByColor = {};
     _.map(data, (row, rowIndex) => {
       _.map(row, (color, colIndex) => {
@@ -88,8 +91,7 @@ export default class PixelManager {
   };
 
   addColorVertices = () => {
-    const nRows = data.length;
-    const nCols = data[0].length;
+    const { nRows, nCols } = this;
 
     // Adjust our center to display the target white pixel as the center
     const offsetRow = nRows * this.pixelSize / 2 - 0.5 * this.pixelSize;

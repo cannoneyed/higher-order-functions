@@ -1,15 +1,25 @@
 import * as THREE from 'three';
 import TWEEN from 'tween.js';
 
-import PixelManager from './pixel-manager';
+import data from 'data/data.json';
+import PixelManager, { PIXEL_SIZE } from './pixel-manager';
 import sceneManager from 'core/scene';
 import hash, { getPixelFromHash } from 'utils/hash';
+
+const FOV = 45;
+const vFOV = FOV * Math.PI / 180;
+const nCols = data[0].length;
+// Adjust our center to display the target white pixel as the center, and align
+// the top of the image with the window at max zoom
+const nPixelsTopHalf = nCols / 2 - 7 - 0.5;
+const offsetY = nPixelsTopHalf * PIXEL_SIZE;
+const maxZoom = offsetY / Math.tan(vFOV / 2);
 
 // Constants
 const ZOOM = {
   min: 10,
   med: 200,
-  max: 1450,
+  max: maxZoom,
   point: 30,
 };
 
@@ -31,7 +41,7 @@ export function animate() {
 
 export function init(container, initialHash) {
   const ratio = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(45, ratio, 1, 30000);
+  camera = new THREE.PerspectiveCamera(FOV, ratio, 1, 30000);
 
   camera.position.z = ZOOM.min;
 
@@ -80,6 +90,9 @@ function onWindowResize() {
 // Animation state machine
 let start;
 
+let lastX = 0;
+let lastY = 0;
+let lastZ = ZOOM.max;
 const zoomParam = { z: ZOOM.min, x: 0, y: 0 };
 const rotateParam = { x: 0, y: 0 };
 const timeParam = { t: 0.00004 };
@@ -119,12 +132,12 @@ function render() {
   camera.position.y = zoomParam.y;
   camera.position.z = zoomParam.z;
 
-  transitionCameraPan();
+  transitionCameraFollowMouse();
 
   renderer.render(scene, camera);
 }
 
-function transitionCameraPan() {
+function transitionCameraFollowMouse() {
   const zoomRange = ZOOM.max - ZOOM.min;
   const zoomPercent = (zoomParam.z - ZOOM.min) / zoomRange;
   const rotationTargetX = 0.01 * rotateParam.y * zoomPercent;
@@ -149,14 +162,7 @@ export function click(event, router) {
   mouse.x = event.clientX / window.innerWidth * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-  camera.updateMatrixWorld();
-  raycaster.setFromCamera(mouse, camera);
-
   let intersects = raycaster.intersectObjects(pixelManager.pixelGroups);
-
-  if (!sceneManager.isInteractive) {
-    return;
-  }
 
   if (intersects.length > 0) {
     const { point } = intersects[0];
@@ -225,6 +231,28 @@ export function mousemove(event) {
   }
 }
 
+function getMinMaxXY() {
+  const { nRows, nCols, pixelSize } = pixelManager;
+  const sceneHeight = nCols * pixelSize;
+  const sceneWidth = nRows * pixelSize;
+  const halfWidth = sceneWidth / 2;
+
+  const fov = camera.fov;
+  const vFOV = fov * Math.PI / 180;
+  const extentY = Math.tan(vFOV / 2) * zoomParam.z;
+  const extentX = extentY * (window.innerWidth / window.innerHeight);
+
+  const topHalf = offsetY;
+  const bottomHalf = sceneHeight - offsetY;
+
+  const maxX = halfWidth - extentX;
+  const minX = -(halfWidth - extentX);
+  const maxY = topHalf - extentY;
+  const minY = -(bottomHalf - extentY);
+
+  return { minX, maxX, minY, maxY };
+}
+
 let startZoom = null;
 export function pinchZoom(scale) {
   if (!sceneManager.isInteractive || sceneManager.isZoomedIn) {
@@ -232,7 +260,12 @@ export function pinchZoom(scale) {
   }
   if (startZoom === null) startZoom = zoomParam.z;
   const zoom = startZoom / scale;
-  zoomParam.z = _.clamp(zoom, ZOOM.med, ZOOM.max);
+
+  zoomParam.z = lastZ = _.clamp(zoom, ZOOM.med, ZOOM.max);
+  const { minX, maxX, minY, maxY } = getMinMaxXY();
+
+  zoomParam.x = _.clamp(zoomParam.x, minX, maxX);
+  zoomParam.y = _.clamp(zoomParam.y, minY, maxY);
 }
 
 export function pinchZoomEnd() {
@@ -248,15 +281,20 @@ export function pan(deltaX, deltaY) {
   if (startX === null) startX = zoomParam.x;
   if (startY === null) startY = zoomParam.y;
 
-  const maxX = 2;
-  const minX = -2;
+  const { minX, maxX, minY, maxY } = getMinMaxXY();
 
-  const minY = -2;
-  const maxY = 2;
+  const pixelSizeAtMaxZoom = window.innerHeight / 2 / nPixelsTopHalf;
+  const zoomRatio = ZOOM.max / zoomParam.z;
+  const screenPixelSize = pixelSizeAtMaxZoom * zoomRatio;
+  const pixelRatio = PIXEL_SIZE / screenPixelSize;
 
-  zoomParam.x = _.clamp(startX - deltaX, minX, maxX);
-  zoomParam.y = _.clamp(startY + deltaY, minY, maxY);
+  zoomParam.x = lastX = _.clamp(startX - deltaX * pixelRatio, minX, maxX);
+  zoomParam.y = lastY = _.clamp(startY + deltaY * pixelRatio, minY, maxY);
 }
+
+window.setZoomFn = fn => {
+  fn(zoomParam);
+};
 
 export function panEnd() {
   startX = null;
@@ -276,7 +314,7 @@ export function zoomOut() {
   }
 
   tweens.zoom = new TWEEN.Tween(zoomParam)
-    .to({ x: 0, y: 0, z: ZOOM.max }, ZOOM_IN_OUT_TIME)
+    .to({ x: lastX, y: lastY, z: lastZ }, ZOOM_IN_OUT_TIME)
     .easing(TWEEN.Easing.Quintic.InOut)
     .start()
     .onComplete(() => {
