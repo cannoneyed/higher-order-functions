@@ -10,7 +10,6 @@ import sceneManager from 'core/scene';
 import soundManager from 'core/sound';
 
 import Title from 'components/Title';
-import Hash from 'components/Hash';
 import SoundPlayer from 'components/SoundPlayer';
 
 import { ActivateButton, Stage, StageWrapper, SkipIntro } from './styled-components';
@@ -30,11 +29,7 @@ export default class Composition extends Component {
     const container = ReactDOM.findDOMNode(this.stage);
     scene.init(container, initialHash);
 
-    this.setState({ initialHash }); // eslint-disable-line react/no-did-mount-set-state
-
-    setTimeout(() => {
-      this.activate({ skip: 'skip' });
-    }, 200);
+    this.setState({ initialHash });
   }
 
   componentWillReceiveProps(nextProps) {
