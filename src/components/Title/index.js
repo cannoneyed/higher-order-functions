@@ -5,6 +5,7 @@ import { observer } from 'mobx-react';
 import colors from 'constants/colors';
 import sceneManager from 'core/scene';
 import hash from 'utils/hash';
+import isMobile from 'utils/is-mobile';
 
 import Fade from 'components/Fade';
 
@@ -16,7 +17,8 @@ export default class TitleComponent extends Component {
     const { isZoomedIn, isInteractive, hoveredPixel } = sceneManager;
     const visible = !isZoomedIn && isInteractive;
 
-    const hashStr = hoveredPixel ? hash(hoveredPixel) : '0000';
+    let hashStr = hoveredPixel ? hash(hoveredPixel) : '0000';
+    hashStr = isMobile() ? '' : hashStr;
     const colorIndex = hoveredPixel ? parseInt(hashStr[0], 16) : 13;
 
     // Calculate a scale factor to shrink the title if necessary
