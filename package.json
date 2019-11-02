@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "csv-parse": "^1.2.0",
+    "csv-parse": "^4.4.6",
     "dotenv": "4.0.0",
     "expose-loader": "^0.7.3",
     "fast-csv": "^2.4.0",
