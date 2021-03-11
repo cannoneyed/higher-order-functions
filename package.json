@@ -22,7 +22,7 @@
     "promise": "7.1.1",
     "prop-types": "^15.5.10",
     "react": "^15.6.1",
-    "react-dev-utils": "^3.0.2",
+    "react-dev-utils": "^11.0.4",
     "react-dom": "^15.6.1",
     "react-router5": "^5.0.2",
     "react-spinkit": "^3.0.0",
